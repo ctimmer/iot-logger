@@ -8,7 +8,8 @@ DB_CONFIG = {
     'PORT' : 3306 ,         # Raspberry PI or 3307 Synology
     'USERNAME' : 'testuser' ,
     'PASSWORD' : 'testpassword' ,
-    'DATABASE' : 'iotlogger'
+    'DATABASE' : 'iotlogger' ,
+    'POOLSIZE' : 10
     }
 
 SERVER_CONFIG = {
@@ -20,8 +21,7 @@ SERVER_CONFIG = {
 CLIENT_CONFIG = {
     'LOGGER_HOST' : 'localhost' ,
     'LISTENER_PORT' : 5011 ,
-    'BUFFER_SIZE' : 16384 ,
-    'REPORT_INTERVAL' : 30
+    'BUFFER_SIZE' : 16384
     }
 
 
