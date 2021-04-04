@@ -11,8 +11,7 @@ SERVER_CONFIG = {
 CLIENT_CONFIG = {
     'LOGGER_HOST' : 'localhost' ,
     'LISTENER_PORT' : 5011 ,
-    'BUFFER_SIZE' : 16384 ,
-    'REPORT_INTERVAL' : 30
+    'BUFFER_SIZE' : 16384 
     }
 
 

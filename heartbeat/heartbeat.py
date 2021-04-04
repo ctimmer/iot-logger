@@ -1,10 +1,6 @@
 #! /usr/bin/python3
 ################################################################################
 # heatbeat.py
-#
-# pip3 install psutil
-# pip3 install pyudev
-#
 ################################################################################
 
 import statsd
@@ -29,10 +25,11 @@ server_address_port = 0
 client_sender_socket = 0
 client_listener_socket = 0
 
+report_interval = 600           # Every 10 minutes
 disk_accum_trigger = 21600      # Every 6 hours
-disk_accum = 999999             # Sends 1st time
+disk_accum = 0
 cpu_times_accum_trigger = 3600  # Every hour
-cpu_times_accum = 999999        # Sends 1st time
+cpu_times_accum = 0
 
 #-------------------------------------------------------------------------------
 # initialize_client_message
@@ -51,15 +48,17 @@ def initialize_client_message (action):
 # get_disk_info
 #-------------------------------------------------------------------------------
 def get_disk_info (heartbeat_data, force):
+    global report_interval
     global disk_accum_trigger
     global disk_accum
+
     if not force:
-        disk_accum += CLIENT_CONFIG ['REPORT_INTERVAL']
+        disk_accum += report_interval
         if disk_accum < disk_accum_trigger :
-            #print ("skip")
             return
         else:
             disk_accum = 0
+
     disks_dict = {}
     heartbeat_data ['disks'] = disks_dict
     for path, label in PATHS:
@@ -136,11 +135,12 @@ def get_sensors_info (heartbeat_data):
 # get_cpu_times_info
 #-------------------------------------------------------------------------------
 def get_cpu_times_info (heartbeat_data, force):
+    global report_interval
     global cpu_times_accum_trigger
     global cpu_times_accum
 
     if not force:
-        cpu_times_accum += CLIENT_CONFIG ['REPORT_INTERVAL']
+        cpu_times_accum += report_interval
         if cpu_times_accum < cpu_times_accum_trigger :
             return
         else:
@@ -187,39 +187,49 @@ def get_cpu_percent_info (heartbeat_data, interval):
 #-------------------------------------------------------------------------------
 # send_heartbeat
 #-------------------------------------------------------------------------------
-def send_heartbeat ():
-    global CLIENT_CONFIG
-    global logger_ip
+def send_heartbeat (address_port, interval, force):
     global client_sender_socket
-    global server_adddress_port
 
-    continue_running = True
     action = 'heartbeat'
 
-    while continue_running :
-        heartbeat_message = initialize_client_message (action)
-        heartbeat_data = heartbeat_message [action]
-        #heartbeat_message [action] = heartbeat_data
-        get_cpu_percent_info (heartbeat_data, CLIENT_CONFIG ['REPORT_INTERVAL'])
-        get_cpu_times_info (heartbeat_data, False)
-        get_sensors_info (heartbeat_data)
-        get_disk_info (heartbeat_data, False)
-        get_memory_info (heartbeat_data)
-        #print (heartbeat_message)
-        result_json = json.dumps (heartbeat_message)
-        bytesToSend = str.encode (result_json)
-        client_sender_socket.sendto (bytesToSend, server_address_port)
-        #send_ping ()
-    # end continue_running
+    heartbeat_message = initialize_client_message (action)
+    heartbeat_data = heartbeat_message [action]
+    #heartbeat_message [action] = heartbeat_data
+    get_cpu_percent_info (heartbeat_data, interval)
+    get_cpu_times_info (heartbeat_data, force)
+    get_sensors_info (heartbeat_data)
+    get_disk_info (heartbeat_data, force)
+    get_memory_info (heartbeat_data)
+    #print (heartbeat_message)
+    result_json = json.dumps (heartbeat_message)
+    bytesToSend = str.encode (result_json)
+    client_sender_socket.sendto (bytesToSend, address_port)
 
 # end send_heartbeat
+
+#-------------------------------------------------------------------------------
+# heartbeat_loop
+#-------------------------------------------------------------------------------
+def heartbeat_loop ():
+    global report_interval
+    global server_adddress_port
+    
+    send_heartbeat (server_address_port, 2, True)   # Send quick heartbeat
+
+    continue_running = True
+    while continue_running :
+        send_heartbeat (server_address_port,
+                        report_interval ,
+                        False)
+    # end continue_running
+
+# end heartbeat_loop
 
 #-------------------------------------------------------------------------------
 # send_ping
 #-------------------------------------------------------------------------------
 def send_ping ():
     global CLIENT_CONFIG
-    global logger_ip
     global client_sender_socket
     global server_adddress_port
 
@@ -245,29 +255,19 @@ def client_listener ():
     while(True):
         bytesAddressPair = client_listener_socket.recvfrom (buffer_size)
         message = bytesAddressPair[0]
-        address = bytesAddressPair[1]       # need to SET
+        address_port = bytesAddressPair[1]       # need to SET
         request_json = message.decode(encoding="ascii", errors="ignore")
         request_dict = json.loads (request_json)
         if request_dict['action'] == "heartbeat":
             # Sending a reply to client
             if 'reply_port' in request_dict :
-                address = (address [0], request_dict['reply_port'])
-            #print (address)
-            action = 'heartbeat'
-            heartbeat_message = initialize_client_message (action)
-            heartbeat_data = heartbeat_message [action]
-            get_cpu_percent_info (heartbeat_data, 1)
-            get_cpu_times_info (heartbeat_data, False)
-            get_sensors_info (heartbeat_data)
-            get_disk_info (heartbeat_data, True)
-            get_memory_info (heartbeat_data)
-            result_json = json.dumps (heartbeat_message)
-            bytesToSend = str.encode (result_json)
-            client_listener_socket.sendto(bytesToSend, address)
+                address_port = (address [0], request_dict['reply_port'])
+            print (address)
+            send_heartbeat (address_port, 2, True)
         elif request_dict['action'] == "pong" :
             if 'server' in request_dict :
                 logger_server_data = request_dict ['server']
-                #print (logger_server_data)
+            #print (logger_server_data)
         else :
             print (request_dict)
 
@@ -311,5 +311,5 @@ try:
 except:
     print ("HEARTBEAT shutting down")
 
-send_heartbeat ()
+heartbeat_loop ()
 
