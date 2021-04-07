@@ -9,7 +9,7 @@ DB_CONFIG = {
     'USERNAME' : 'testuser' ,
     'PASSWORD' : 'testpassword' ,
     'DATABASE' : 'iotlogger' ,
-    'POOLSIZE' : 10
+    'POOLSIZE' : 12
     }
 
 SERVER_CONFIG = {
