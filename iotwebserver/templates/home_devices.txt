@@ -1,0 +1,5 @@
+
+<%include file="home_devices_header.txt" />
+<%include file="home_devices_items.txt" />
+<%include file="home_devices_trailer.txt" />
+

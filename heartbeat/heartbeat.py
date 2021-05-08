@@ -6,11 +6,14 @@
 import statsd
 import time
 import psutil
-import multiprocessing
+#import multiprocessing
+import threading
 import socket
 import os
 import pyudev
 import json
+
+t_data = threading.local ()     # local thread data
 
 from loggerconfig import *
 
@@ -22,14 +25,26 @@ logger_ip = ''
 logger_server_data = {}
 
 server_address_port = 0
-client_sender_socket = 0
-client_listener_socket = 0
+client_sender_socket = False
+client_listener_socket = False
 
 report_interval = 600           # Every 10 minutes
 disk_accum_trigger = 21600      # Every 6 hours
 disk_accum = 0
 cpu_times_accum_trigger = 3600  # Every hour
 cpu_times_accum = 0
+
+#-------------------------------------------------------------------------------
+# sanitize_for_json
+#-------------------------------------------------------------------------------
+def sanitize_for_json (text_data):
+
+    if text_data == "None":
+        return ("false")            # 'None' to 'false'
+
+    return (text_data)              # No change
+
+# end sanitize_for_json
 
 #-------------------------------------------------------------------------------
 # initialize_client_message
@@ -167,20 +182,25 @@ def get_cpu_times_info (heartbeat_data, force):
 #-------------------------------------------------------------------------------
 def get_cpu_percent_info (heartbeat_data, interval):
 
+    sample_interval = interval
+    if sample_interval >= 5 :
+        sample_interval -= 1        # adjust for 'load' delay
+
     cpu_percent_dict = {}
     heartbeat_data ['cpu_percent'] = cpu_percent_dict
-    cpu_t_percent = psutil.cpu_times_percent(interval)
-    cpu_percent_dict['user'] = cpu_t_percent.user
-    cpu_percent_dict['nice'] = cpu_t_percent.nice
-    cpu_percent_dict['system'] = cpu_t_percent.system
-    cpu_percent_dict['idle'] = cpu_t_percent.idle
-    cpu_percent_dict['iowait'] = cpu_t_percent.iowait
-    cpu_percent_dict['irq'] = cpu_t_percent.irq
-    cpu_percent_dict['softirq'] = cpu_t_percent.softirq
-    cpu_percent_dict['steal'] = cpu_t_percent.steal
-    cpu_percent_dict['guest'] = cpu_t_percent.guest
-    cpu_percent_dict['guest_nice'] = cpu_t_percent.guest_nice
-    cpu_percent_dict['load'] = psutil.cpu_percent(True, 1)
+    cpu_t_percent = psutil.cpu_times_percent (sample_interval)
+
+    cpu_percent_dict ['user'] = cpu_t_percent.user
+    cpu_percent_dict ['nice'] = cpu_t_percent.nice
+    cpu_percent_dict ['system'] = cpu_t_percent.system
+    cpu_percent_dict ['idle'] = cpu_t_percent.idle
+    cpu_percent_dict ['iowait'] = cpu_t_percent.iowait
+    cpu_percent_dict ['irq'] = cpu_t_percent.irq
+    cpu_percent_dict ['softirq'] = cpu_t_percent.softirq
+    cpu_percent_dict ['steal'] = cpu_t_percent.steal
+    cpu_percent_dict ['guest'] = cpu_t_percent.guest
+    cpu_percent_dict ['guest_nice'] = cpu_t_percent.guest_nice
+    cpu_percent_dict ['load'] = psutil.cpu_percent(True, 1)
 
 # end get_cpu_percent_info
 
@@ -188,32 +208,35 @@ def get_cpu_percent_info (heartbeat_data, interval):
 # send_heartbeat
 #-------------------------------------------------------------------------------
 def send_heartbeat (address_port, interval, force):
-    global client_sender_socket
 
     action = 'heartbeat'
-
     heartbeat_message = initialize_client_message (action)
     heartbeat_data = heartbeat_message [action]
-    #heartbeat_message [action] = heartbeat_data
+
+    # get_pu_percent_info determines  report interval
     get_cpu_percent_info (heartbeat_data, interval)
     get_cpu_times_info (heartbeat_data, force)
     get_sensors_info (heartbeat_data)
     get_disk_info (heartbeat_data, force)
     get_memory_info (heartbeat_data)
-    #print (heartbeat_message)
-    result_json = json.dumps (heartbeat_message)
-    bytesToSend = str.encode (result_json)
-    client_sender_socket.sendto (bytesToSend, address_port)
+
+    result_json = json.dumps (heartbeat_message)    # dictionary to json
+    print (result_json)
+    bytesToSend = str.encode (result_json)          # message length
+    t_data.client_sender_socket.sendto (bytesToSend,
+                                        address_port)
 
 # end send_heartbeat
 
 #-------------------------------------------------------------------------------
 # heartbeat_loop
 #-------------------------------------------------------------------------------
-def heartbeat_loop ():
-    global report_interval
-    global server_adddress_port
-    
+def heartbeat_loop (client_sender_socket ,
+                    server_address_port ,
+                    report_interval) :
+
+    t_data.client_sender_socket = client_sender_socket
+
     send_heartbeat (server_address_port, 2, True)   # Send quick heartbeat
 
     continue_running = True
@@ -246,12 +269,14 @@ def send_ping ():
 #-------------------------------------------------------------------------------
 # client_listener
 #-------------------------------------------------------------------------------
-def client_listener ():
+def client_listener (client_listener_socket) :
     global CLIENT_CONFIG
-    global client_listener_socket
+    #global client_listener_socket
     global logger_server_data
 
+    t_data.client_listener_socket = client_listener_socket
     buffer_size = CLIENT_CONFIG ['BUFFER_SIZE']
+
     while(True):
         bytesAddressPair = client_listener_socket.recvfrom (buffer_size)
         message = bytesAddressPair[0]
@@ -262,7 +287,7 @@ def client_listener ():
             # Sending a reply to client
             if 'reply_port' in request_dict :
                 address_port = (address [0], request_dict['reply_port'])
-            print (address)
+            #print (address)
             send_heartbeat (address_port, 2, True)
         elif request_dict['action'] == "pong" :
             if 'server' in request_dict :
@@ -284,9 +309,10 @@ def initialize () :
     global server_address_port
     global my_hostname
     global logger_ip
+    global report_interval
 
     client_listener_socket = socket.socket(family=socket.AF_INET,
-                                    type=socket.SOCK_DGRAM)
+                                            type=socket.SOCK_DGRAM)
     # Bind to address and ip
     client_listener_socket.bind(("", CLIENT_CONFIG ['LISTENER_PORT']))
     print("UDP client listener ready")
@@ -298,18 +324,35 @@ def initialize () :
     logger_ip = socket.gethostbyname (CLIENT_CONFIG ['LOGGER_HOST'])
     server_address_port = (logger_ip, SERVER_CONFIG ['LISTENER_PORT'])
 
+    if 'REPORT_INTERVAL' in CLIENT_CONFIG :
+        report_interval = CLIENT_CONIG ['REPORT_INTERVAL']
+
+    report_interval = 5             # TEST
+
 # end initialize
 
 #-------------------------------------------------------------------------------
 # main
 #-------------------------------------------------------------------------------
 
-initialize ()
-
-try:
-    multiprocessing.Process(target=client_listener).start()
-except:
+try :
+    initialize ()
+    listener_thread = threading.Thread (target=client_listener,
+                                        args=(client_listener_socket,))
+    listener_thread.start ()
+    #multiprocessing.Process(target=client_listener).start()
+    heartbeat_thread = threading.Thread (target=heartbeat_loop,
+                                        args=(client_sender_socket,
+                                                server_address_port,
+                                                report_interval))
+    heartbeat_thread.start ()
+    heartbeat_thread.join ()
+    #heartbeat_loop ()
+except KeyboardInterrupt :
     print ("HEARTBEAT shutting down")
 
-heartbeat_loop ()
+if client_sender_socket :
+    client_sender_socket.close ()
+if client_listener_socket :
+    client_listener_socket.close ()
 

@@ -1,3 +1,17 @@
 /*
  * iotweb.css
 */
+
+.heartbeat_toggle_class
+  {
+  cursor: pointer ;
+  }
+.heartbeat_on
+  {
+  background-color : green ;
+  }
+.heartbeat_off
+  {
+  background-color : red ;
+  }
+

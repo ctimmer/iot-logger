@@ -16,8 +16,8 @@ import mariadb, sys
 import time
 import json
 
-#import mako
 from mako.template import Template
+from mako.lookup import TemplateLookup
 
 from loggerconfig import *
 
@@ -28,6 +28,12 @@ db_connection = False
 db_date_format = '%Y-%m-%d %H:%M:%S'
 low_date = "0000-00-00 00:00:00"
 initialize_timestamp = low_date
+
+errors = {
+    'db_error' : {'code' : -100 ,
+                'system' : 'Database error' ,
+                'user' : 'There is a problem with the database'}
+    }
 
 ################################################################################
 # database functions
@@ -43,7 +49,6 @@ def get_current_timestamp () :
         cursor = db_connection.cursor (prepared=True, buffered=True)
         cursor.execute (sql)
         result = cursor.fetchone ()
-        #db_connection.commit ()
         cursor.close ()
         return (result [0].strftime(db_date_format))
     except mariadb.Error as e:
@@ -53,16 +58,16 @@ def get_current_timestamp () :
 # end get_current_timestamp
 
 #-------------------------------------------------------------------------------
-# initialize_return_message
+# initialize_json_return
 #-------------------------------------------------------------------------------
-def initialize_return_message () :
+def initialize_json_return () :
 
     return ({
             'result' : {'error_code' : 0} ,
             'reply' : []
             })
 
-# end initialize_return_message
+# end initialize_json_return
 
 #-------------------------------------------------------------------------------
 # set_result_code
@@ -104,41 +109,126 @@ def copy_log_to_reply (device_log, reply_dict, log_id, date_cutoff) :
 #-------------------------------------------------------------------------------
 def get_device_list () :
     global db_connection
-    self = get_device_list
-    self.sql = 'SELECT' \
-                + ' devices.device_id' \
-                + ',devices.description' \
-                + ',devices.log_date' \
-                + ',device_types.name' \
-                + ' FROM' \
-                + ' devices' \
-                + ',device_types' \
-                + ' WHERE' \
-                + ' device_types.type_key = devices.type_key' \
-                + ' ORDER BY' \
-                + ' devices.device_id'
+    sql = "SELECT" \
+            + " devices.device_key" \
+            + ",devices.device_id" \
+            + ",devices.description" \
+            + ",devices.log_date" \
+            + ",COALESCE (device_types.name, 'Unknown')" \
+            + " FROM" \
+            + " devices" \
+            + " LEFT OUTER JOIN" \
+            + " device_types" \
+            + " ON" \
+            + " device_types.type_key = devices.type_key" \
+            + " ORDER BY" \
+            + " devices.device_id"
 
-    return_dict = initialize_return_message ()
+    return_dict = initialize_json_return ()
     try :
-        self.cursor = db_connection.cursor (prepared=True, buffered=True)
-        self.cursor.execute (self.sql)
-        result = self.cursor.fetchall ()
+        cursor = db_connection.cursor (prepared=True, buffered=True)
+        cursor.execute (sql)
+        result = cursor.fetchall ()
         for row in result :
             return_dict['reply'].append (
                 {
-                'device_id' : row [0] ,
-                'description' : row[1] ,
-                'last_log_date' : row[2].strftime (db_date_format) ,
-                'type' : row[3]
+                'device_key' : row [0] ,
+                'device_id' : row [1] ,
+                'description' : row[2] ,
+                'last_log_date' : row[3].strftime (db_date_format) ,
+                'type' : row[4]
                 })
         #db_connection.commit ()
-        self.cursor.close ()
+        cursor.close ()
     except mariadb.Error as e:
         set_result_code (return_dict, -1, f"get_device_list: {e}")
 
     return (return_dict)
 
 # end get_device_list
+
+#-------------------------------------------------------------------------------
+# get_device_status
+#-------------------------------------------------------------------------------
+def get_device_status (device_id, log_id) :
+    global db_connection
+    sql = "SELECT" \
+            + " devices.device_id" \
+            + ",devices.log_date" \
+            + ',devices.log_data' \
+            + " FROM" \
+            + " devices" \
+            + " WHERE" \
+            + " devices.device_id = %s"
+
+    return_dict = initialize_json_return ()
+    try :
+        cursor = db_connection.cursor (buffered=True)
+        cursor.execute (sql, (device_id,))
+        row = cursor.fetchone ()
+        cursor.close ()
+        log_id_data = {}
+        log_data = json.loads (row [2])
+        if log_id in log_data :
+            log_id_data [log_id] = log_data [log_id]
+        return_dict['reply'].append (
+            {
+            'device_id' : row [0] ,
+            'last_log_date' : row[1].strftime (db_date_format) ,
+            'log_data' : log_id_data
+            })
+    except mariadb.Error as e:
+        set_result_code (return_dict, -1, f"get_device_status: {e}")
+
+    return (return_dict)
+
+# end get_device_status
+
+#-------------------------------------------------------------------------------
+# get_device_status_changes
+#-------------------------------------------------------------------------------
+def get_device_status_changes (log_id, log_date_cutoff) :
+    global db_connection
+    sql = "SELECT" \
+            + " devices.device_id" \
+            + ",devices.log_date" \
+            + ',devices.log_data' \
+            + " FROM" \
+            + " devices" \
+            + " WHERE" \
+            + ' devices.log_date > %s'
+
+    return_dict = initialize_json_return ()
+    next_date_cutoff = log_date_cutoff
+    try :
+        cursor = db_connection.cursor (buffered=True)
+        cursor.execute (sql, (log_date_cutoff,))
+        result = cursor.fetchall ()
+        cursor.close ()
+        for row in result :
+            last_log_date = row[1].strftime (db_date_format)
+            if last_log_date <= log_date_cutoff :
+                continue
+            if next_date_cutoff < last_log_date :
+                next_date_cutoff = last_log_date
+            log_dict = {}
+            if not copy_log_to_reply (row[2],
+                                    log_dict,
+                                    log_id,
+                                    log_date_cutoff):
+                continue
+            reply_change_data = {}
+            reply_change_data['device_id'] = row [0]
+            reply_change_data['last_log_date'] = row[1].strftime(db_date_format)
+            reply_change_data['log_data'] = json.loads (row [2])
+            return_dict['reply'].append (reply_change_data)
+        return_dict ['log_date_cutoff'] = next_date_cutoff
+    except mariadb.Error as e:
+        set_result_code (return_dict, -1, f"get_device_status_changes: {e}")
+
+    return (return_dict)
+
+# end get_device_status_changes
 
 #-------------------------------------------------------------------------------
 # get_device_type_list
@@ -152,7 +242,7 @@ def get_device_type_list () :
             + ' ORDER BY' \
             + ' device_types.name'
 
-    return_dict = initialize_return_message ()
+    return_dict = initialize_json_return ()
     try :
         cursor = db_connection.cursor (prepared=True, buffered=True)
         cursor.execute (sql)
@@ -176,55 +266,54 @@ def get_device_type_list () :
 #-------------------------------------------------------------------------------
 def get_type_status (type_name, log_id, log_date_cutoff) :
     global db_connection
-    self = get_type_status
-    self.sql = 'SELECT' \
-                + ' devices.device_id' \
-                + ',device_types.name' \
-                + ',devices.log_date' \
-                + ',devices.log_data' \
-                + ' FROM' \
-                + ' devices' \
-                + ',device_types' \
-                + ' WHERE' \
-                + ' device_types.name = %s' \
-                + ' AND' \
-                + ' devices.type_key = device_types.type_key' \
-                + ' AND' \
-                + ' devices.log_date > %s' \
-                + ' ORDER BY' \
-                + ' devices.device_id'
+    sql = 'SELECT' \
+            + ' devices.device_id AS device_id' \
+            + ',devices.log_date' \
+            + ',devices.log_data' \
+            + ',device_types.name' \
+            + ' FROM' \
+            + ' devices' \
+            + ',device_types'
+    sql += ' WHERE'
+    if type_name != "" :
+        sql += ' device_types.name = %s' \
+            + ' AND'
+    sql += ' devices.type_key = device_types.type_key' \
+            + ' AND' \
+            + ' devices.log_date > %s' \
+            + ' ORDER BY' \
+            + ' devices.device_id'
 
-    #print (self.sql)
-
-    return_dict = initialize_return_message ()
+    return_dict = initialize_json_return ()
     next_date_cutoff = log_date_cutoff
     #set_result_code (return_dict, 1, "OK")
     #print (return_dict)
     try :
-        self.cursor = db_connection.cursor (prepared=True, buffered=True)
-        self.cursor.execute (self.sql, (type_name, log_date_cutoff))
-        result = self.cursor.fetchall ()
+        cursor = db_connection.cursor (buffered=True)
+        cursor.execute (sql, (type_name, log_date_cutoff))
+        result = cursor.fetchall ()
+        cursor.close ()
         for row in result :
-            last_log_date = row[2].strftime (db_date_format)
+            last_log_date = row[1].strftime (db_date_format)
             if last_log_date <= log_date_cutoff :
                 continue
             if next_date_cutoff < last_log_date :
                 next_date_cutoff = last_log_date
             log_dict = {}
-            if not copy_log_to_reply (row[3],
+            if not copy_log_to_reply (row[2],
                                 log_dict,
                                 log_id,
                                 log_date_cutoff):
                 continue
-            reply_log_data = {
-                'device_id' : row [0] ,
-                'type' : row[1] ,
-                'last_log_date' : last_log_date ,
-                'log_data' : log_dict
-                }
+            reply_log_data = {}
+            reply_log_data['device_id'] = row [0]
+            reply_log_data['last_log_date'] = row[1].strftime(db_date_format)
+            #reply_log_data['log_data'] = row [2]
+            reply_log_data['log_data'] = json.loads (row [2])
+            if type_name != "" :
+                reply_log_data['type'] = row [3]
             return_dict['reply'].append (reply_log_data)
         #db_connection.commit ()
-        self.cursor.close ()
         return_dict ['log_date_cutoff'] = next_date_cutoff
     except mariadb.Error as e:
         set_result_code (return_dict, -1, f"get_type_status: {e}")
@@ -241,6 +330,15 @@ def get_type_status_all (type_name, log_id) :
     return (get_type_status (type_name, log_id, low_date))
 
 # end get_type_status_all
+
+#-------------------------------------------------------------------------------
+# get_device_status_all
+#-------------------------------------------------------------------------------
+def get_device_status_all (log_id) :
+
+    return (get_type_status ("", log_id, low_date))
+
+# end get_device_status_all
 
 ################################################################################
 # Server functions
@@ -269,6 +367,71 @@ def device_list_handler_t (request_dict) :
 # end device_list_handler_t
 
 #-----------------------------------
+# device_status_handler
+#-----------------------------------
+def device_status_handler (request_dict) :
+
+    if not 'device_id' in request_dict :
+        reply_dict = set_result_code \
+                        (initialize_json_return () , # missing device_id
+                        -1 ,
+                        "Missing 'device_id' entry")
+    else :
+        reply_dict = get_device_status (request_dict ['device_id'],
+                                        low_date)  # get the results
+
+    return (json.dumps (reply_dict))
+
+# end device_status_handler
+
+#-----------------------------------
+# device_status_handler_t
+#-----------------------------------
+def device_status_handler_t (request_dict) :
+
+    if not 'device_id' in request_dict :
+        return_text = set_result_code \
+                        (initialize_json_return () , # missing device_id
+                        -1 ,
+                        "Missing 'device_id' entry")
+    else :
+        status_dict = get_device_status (request_dict ['device_id'],
+                                        low_date)   # get the results
+        mylookup = TemplateLookup(directories=['.'])
+        mytemplate = Template (filename='templates/device_status.txt',
+                                module_directory='/tmp/mako_modules',
+                                lookup=mylookup)
+        template_dict = status_dict['reply'][0]     # First (only) entry
+        return_text = mytemplate.render(**template_dict)
+
+    return (return_text)
+
+# end device_status_handler_t
+
+#-----------------------------------
+# device_status_changes_handler
+#-----------------------------------
+def device_status_changes_handler (request_dict) :
+
+    if not 'log_id' in request_dict :
+        reply_dict = set_result_code \
+                        (initialize_json_return () , # missing device_id
+                        -1 ,
+                        "Missing 'log_id' entry")
+    else :
+        if 'log_date_cutoff' in request_dict :
+            log_date_cutoff = request_dict ['log_date_cutoff']
+        else :
+            log_date_cutoff = low_date
+        reply_dict = get_device_status_changes \
+                        (request_dict ['log_id'],
+                        log_date_cutoff)  # get the results
+
+    return (json.dumps (reply_dict))
+
+# end device_status_changes_handler
+
+#-----------------------------------
 # type_status_handler
 #-----------------------------------
 def type_status_handler (request_dict) :
@@ -276,11 +439,11 @@ def type_status_handler (request_dict) :
 
     date_cutoff = low_date
     if not 'type' in request_dict :
-        return (set_result_code (initialize_return_message () , # missing type
+        return (set_result_code (initialize_json_return () , # missing type
                                 -1 ,
                                 "Missing 'type' entry"))
     if not 'log_id' in request_dict :
-        return (set_result_code (initialize_return_message () ,# missing log_id
+        return (set_result_code (initialize_json_return () ,# missing log_id
                                 -1 ,
                                 "Missing 'log_id' entry"))
     if 'date_cutoff' in request_dict :                         # use cutoff date
@@ -297,14 +460,42 @@ def type_status_handler (request_dict) :
 #-------------------------------------------------------------------------------
 def home_page_handler (request_dict) :
 
-    #ret = get_type_status_all ("Computer", "heartbeat")      ## TESTING
-    #print (ret)
-    #ret = get_type_status ("Computer", "heartbeat", ret['log_date_cutoff'])
-    #print (ret)
+    #template_dict = initialize_json_return ()
+    template_dict = {}
 
+    device_list_ret = get_device_list ()
+    # print ( device_list_ret['reply'] )
+    template_dict['devices'] = {}
+    template_dict['device_ids'] = []
+    for device_entry in device_list_ret['reply'] :
+        #print (device_entry['device_id'])   
+        template_dict ['devices'][device_entry['device_id']] = {
+            'device_key' : device_entry['device_key'] ,
+            'description' : device_entry['description'] ,
+            'type' : device_entry['type'] 
+            }
+        template_dict['device_ids'].append (device_entry['device_id'])
+    # print (template_dict)
+
+    device_status = get_device_status_all ('heartbeat')
+    #print ("ds:", device_status)
+    #template_dict ['device_status'] = device_status ['reply']
+    template_dict ['log_date_cutoff'] = device_status ['log_date_cutoff']
+    for status_entry in device_status ['reply'] :
+        device_id = status_entry ['device_id']
+        #print ("id:", device_id)
+        if device_id in template_dict['devices'] :
+            template_dict['devices'][device_id]['log_data'] \
+                = status_entry ['log_data']
+            
+    # print ("==>td:", template_dict)
+    #return "hi"
+
+    mylookup = TemplateLookup(directories=['.'])
     mytemplate = Template (filename='templates/home.txt',
-                        module_directory='/tmp/mako_modules')
-    return (mytemplate.render())
+                            module_directory='/tmp/mako_modules',
+                            lookup=mylookup)
+    return (mytemplate.render(**template_dict))
 
 # end home_page_handler
 
@@ -358,6 +549,18 @@ action_dict = {
         'handler' : type_status_handler ,
         'content_type' : 'application/json'
         } ,
+    'device_status' : {
+        'handler' : device_status_handler ,
+        'content_type' : 'application/json'
+        } , 
+    'device_status_changes' : {
+        'handler' : device_status_changes_handler ,
+        'content_type' : 'application/json'
+        } , 
+    'device_status_t' : {
+        'handler' : device_status_handler_t ,
+        'content_type' : 'text/html'
+        } ,
 #----
 #---- plain text requests
 #----
@@ -373,6 +576,7 @@ action_dict = {
 #-------------------------------------------------------------------------------
 def request_handler (request_dict) :
     global action_dict
+    global db_connection
 
     if not 'action' in request_dict :       # Check for 'action' key
         request_dict ['action'] = 'error'
@@ -390,8 +594,9 @@ def request_handler (request_dict) :
                                         user=DB_CONFIG['USERNAME'] ,
                                         passwd=DB_CONFIG['PASSWORD'] ,
                                         database=DB_CONFIG['DATABASE'])
-        return (action_dict[action]['handler'] (request_dict))
+        reply = action_dict[action]['handler'] (request_dict)
         db_connection.close ()
+        return (reply)
     except mariadb.Error as e:
         request_dict ['action'] = 'error'
         return (f"Error connecting to MariaDB Platform: {e}")
@@ -401,11 +606,11 @@ def request_handler (request_dict) :
 #-------------------------------------------------------------------------------
 # get_handler
 #-------------------------------------------------------------------------------
-def Xget_handler (parm_dict) :
+def get_handler (parm_dict) :
     print ("get_handler: ", parm_dict)
     
 
-# end Xget_handler
+# end get_handler
 
 #-------------------------------------------------------------------------------
 # MyServer
@@ -446,20 +651,17 @@ class MyServer (http.server.SimpleHTTPRequestHandler):
 #---- Outputs:
 #----   json formatted reply message
     def do_POST (self):
-        #request_handler (self)
-        self.send_response (200)
-        self.send_header ("Content-type", "application/json")
-        self.end_headers ()
         try :
             length = int (self.headers ['Content-Length'])
             post_data = self.rfile.read (length).decode ('utf-8')
             request_dict = json.loads (post_data)
-            reply_dict = request_handler (request_dict)
+            reply_text = request_handler (request_dict)
         except :
-            reply_dict = set_result_code (initialize_return_message () ,
-                                        -1 ,
-                                        "Invalid input message format")
-        self.wfile.write (bytes (json.dumps (reply_dict), 'utf-8'))
+            reply_text = json.dumps \
+                            (set_result_code (initialize_json_return () ,
+                            -1 ,
+                           "Invalid input message format"))
+        self.send_reply (request_dict['action'], reply_text)
 
 # end MyServer
 

@@ -11,7 +11,7 @@ import mariadb, sys
 
 from loggerconfig import *
 
-db_pool = 0
+db_pool = False
 t_data = threading.local ()     # local thread data
 thread_count_high_water = 5     # slow down point
 
@@ -72,6 +72,16 @@ def thread_end () :
     t_data.db_conn.close ()
 
 # end thread_end
+
+#-------------------------------------------------------------------------------
+# thread_rollback
+#-------------------------------------------------------------------------------
+def thread_rollback () :
+
+    t_data.db_conn.rollback ()
+    t_data.db_conn.close ()
+
+# end thread_rollback
 
 #-------------------------------------------------------------------------------
 # set_initialize_timestamp
@@ -191,21 +201,20 @@ def unknown_device (log_dict_in) :
                     unknown_device_type_key,
                     t_data.current_timestamp,
                     log_json))
-    device_key = (cursor.lastrowid)
-    #print ("dk:", device_key)
+    device_key = (cursor.lastrowid)         # get auto increment device key
     cursor.close ()
     update_device_log (device_key, log_dict_in)
 
 # end unknown_device
 
 #-------------------------------------------------------------------------------
-# process_request
+# process_log_request
 # Inputs:
 #   request_dict - From client 
 #   t_data.db_conn - From db pool
 #-------------------------------------------------------------------------------
-def process_request (request_dict) :
-    #print ('process_request')
+def process_log_request (request_dict) :
+    #print ('process_log_request')
     #print (request_dict)
     id = request_dict['id']
     #print (id)
@@ -226,19 +235,23 @@ def process_request (request_dict) :
         #print ("none")
         unknown_device (request_dict)
 
-# end process_request
+# end process_log_request
 
 #-------------------------------------------------------------------------------
-# process_request_thread
+# process_log_request_thread
 #-------------------------------------------------------------------------------
-def process_request_thread (db_conn, request_dict) :
+def process_log_request_thread (db_conn, request_dict) :
 
-    thread_setup (db_conn)
-    process_request (request_dict)
-    thread_end ()
-    # time.sleep (95.0)                 # for testing threads
+    try :
+        thread_setup (db_conn)
+        process_log_request (request_dict)
+        thread_end ()
+        # time.sleep (95.0)                 # for testing threads
+    except Exception as e :
+        print ("process_log rollback")      # need to do more here
+        thread_rollback ()
 
-# end process_request_thread
+# end process_log_request_thread
 
 #-------------------------------------------------------------------------------
 # ping_handler
@@ -267,6 +280,47 @@ def ping_handler (db_conn, request_dict, reply_ip) :
     thread_end ()
 
 # end ping_handler
+
+#-------------------------------------------------------------------------------
+# get_db_connection - Returns db_pool connection
+#   Attempts to recover from a database restart
+#-------------------------------------------------------------------------------
+def get_db_connection () :
+    global db_pool
+
+    while True :
+        if db_pool :
+            try:
+                db_connection = db_pool.get_connection ()
+                return (db_connection)
+            except mariadb.Error as e:
+                print(f"Error connecting to MariaDB Platform: {e}")
+            try:
+                db_pool.close ()
+            except :
+                pass
+        while True :
+            db_pool = False
+            time.sleep (5.0)
+            try:
+                db_pool = mariadb.ConnectionPool (
+                    pool_name='db_pool' ,
+                    pool_size=DB_CONFIG['POOLSIZE'] ,
+                    pool_reset_connection = False ,
+                    host=DB_CONFIG['HOSTNAME'] ,
+                    port=DB_CONFIG['PORT'] ,
+                    user=DB_CONFIG['USERNAME'] ,
+                    passwd=DB_CONFIG['PASSWORD'] ,
+                    database=DB_CONFIG['DATABASE']
+                    )
+            except mariadb.Error as e:
+                print(f"Error connecting to MariaDB Platform: {e}")
+                continue
+            break
+        # end db_pool
+    # end db_connection
+
+# end get_db_connection
 
 #-------------------------------------------------------------------------------
 # wait_for_request
@@ -303,11 +357,12 @@ def wait_for_request () :
             continue                        # unknown 'action' value
         if threading.active_count() >= thread_count_high_water :
             time.sleep (0.5)                # everyone out of the pool
-        try:
-            db_connection = db_pool.get_connection ()
-        except mariadb.Error as e:
-            print(f"Error connecting to MariaDB Platform: {e}")
-            continue
+        #try:
+            #db_connection = db_pool.get_connection ()
+        #except mariadb.Error as e:
+            #print(f"Error connecting to MariaDB Platform: {e}")
+            #continue
+        db_connection = get_db_connection ()
         if 'handler' in action_dict :
             t1 = threading.Thread (target=action_dict['handler'],
                                     name=request_dict['action'] ,
@@ -316,7 +371,7 @@ def wait_for_request () :
                                             address))
             t1.start()
         else :
-            t1 = threading.Thread (target=process_request_thread,
+            t1 = threading.Thread (target=process_log_request_thread,
                                     name=request_dict['action'] ,
                                     args=(db_connection, request_dict))
             t1.start()
@@ -356,26 +411,31 @@ def initialize () :
         sys.exit(1)
     print("logger server listening")
 
-    try:
-        db_pool = mariadb.ConnectionPool (  # initialize db connection pool
-            pool_name='db_pool' ,
-            pool_size=DB_CONFIG['POOLSIZE'] ,
-            pool_reset_connection = False ,
-            host=DB_CONFIG['HOSTNAME'] ,
-            port=DB_CONFIG['PORT'] ,
-            user=DB_CONFIG['USERNAME'] ,
-            passwd=DB_CONFIG['PASSWORD'] ,
-            database=DB_CONFIG['DATABASE']
-            )
-        thread_count_high_water = DB_CONFIG['POOLSIZE'] - 2
-        #---- Set start time, et. al.
-        ts_thread = threading.Thread (target=set_initialize_timestamp,
-                                        args=(db_pool.get_connection(),))
-        ts_thread.start ()
-        ts_thread.join ()               # wait for thread to complete
-    except mariadb.Error as e:
-        print(f"Error MariaDB Platform: {e}")
-        sys.exit(1)
+    #try:
+        #db_pool = mariadb.ConnectionPool (  # initialize db connection pool
+            #pool_name='db_pool' ,
+            #pool_size=DB_CONFIG['POOLSIZE'] ,
+            #pool_reset_connection = False ,
+            #host=DB_CONFIG['HOSTNAME'] ,
+            #port=DB_CONFIG['PORT'] ,
+            #user=DB_CONFIG['USERNAME'] ,
+            #passwd=DB_CONFIG['PASSWORD'] ,
+            #database=DB_CONFIG['DATABASE']
+            #)
+    #except mariadb.Error as e:
+        #print(f"Error MariaDB Platform: {e}")
+    #except :
+        #continue
+    thread_count_high_water = DB_CONFIG['POOLSIZE'] - 2
+    db_connection = get_db_connection ()
+    #---- Set start time, et. al.
+    ts_thread = threading.Thread (target=set_initialize_timestamp,
+                                    args=(get_db_connection(),))
+    ts_thread.start ()
+    ts_thread.join ()               # wait for thread to complete
+    #except mariadb.Error as e:
+        #print(f"Error MariaDB Platform: {e}")
+        #sys.exit(1)
     print ('database connection pool initialized')
 
     allowed_actions ['ping']['handler'] = ping_handler
@@ -386,9 +446,13 @@ def initialize () :
 # main
 #-------------------------------------------------------------------------------
 
-initialize ()
-
-wait_for_request ()
+try :
+    initialize ()
+    wait_for_request ()
+except KeyboardInterrupt:
+    print ("LOGGER shutting down")
+except Exception as e :
+    print ()
 
 db_pool.close ()
 

@@ -1,8 +1,12 @@
 <!DOCTYPE html>
-
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+<%!
+    import json
+%>
+
 <title>IOT</title>
 
 <link rel="stylesheet"
@@ -11,16 +15,50 @@
     href="templates/iotweb.css"/>
 
 <script type="text/javascript">
-var IOTWEB_INFO =
+var IOTWEB =
     {
-    }
+    devices : ${json.dumps (devices)} ,
+    log_date_cutoff : '${log_date_cutoff}' ,
+    heartbeat_interval : 20 ,           // low for testing
+    heartbeat_active : false ,
+    heartbeat_timer : null ,
+    date_low : "0000-00-00 00:00:00" ,
+    last_json_reply : ""
+    } ;
 </script>
 
-<script type="text/javascript" src="templates/jquery-3.6.0.min.js"></script>
-<script type="text/javascript" src="templates/iotweb.js"></script>
+<script type="text/javascript" src="/templates/jquery-3.6.0.min.js"></script>
+<script type="text/javascript" src="/templates/iotweb.js"></script>
 
 </head>
 
 <body>
 <div>IOTWEBSERVER</div>
+
+<table>
+
+<tr>
+<td>
+Devices
+<span
+  id="heartbeat_toggle_button"
+  class="heartbeat_toggle_class heartbeat_on"
+  onclick="heartbeat_toggle () ;"
+  ></span>
+</td>
+<td>Display Area</td>
+</tr>
+
+<tr>
+<td>
+<%include file="home_devices.txt" />
+</td>
+<td>
+<div id="display_area">
+Empty
+</div>
+</td>
+
+</table>
+
 </body>

@@ -1,0 +1,45 @@
+##
+% for device in device_ids :
+<tr class="device_list_tr">
+<td class="device_list_type_td">${devices[device]['type']}</td>
+<td class="device_list_id_td">
+<div
+  id="dev_item_${device}"
+  class="dev_item_class"
+  onclick="display_device_status ('${device}') ;"
+  >
+${device}
+</div>
+</td>
+<td>
+<div
+  id="dev_item_update_${device}"
+  class="dev_item_update_class"
+  >
+U
+</div>
+</td>
+<td>
+<div
+  id="dev_item_heartbeat_${device}"
+  class="dev_item_heartbeat_class"
+  onclick="display_device_heartbeat ('${device}') ;"
+  >
+HeartBeat
+</div>
+</td>
+<td>
+<div
+  id="dev_item_status_${device}"
+  class="dev_item_status_class"
+  onclick="display_device_status ('${device}') ;"
+  >
+Status
+</div>
+</td>
+</tr>
+% endfor
+
+
+
+## <td class="device_list_description_td">${devices[device]['description']}</td>
