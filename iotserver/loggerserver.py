@@ -283,42 +283,16 @@ def ping_handler (db_conn, request_dict, reply_ip) :
 
 #-------------------------------------------------------------------------------
 # get_db_connection - Returns db_pool connection
-#   Attempts to recover from a database restart
+#   ToDo: Attempt to recover from a database restart
 #-------------------------------------------------------------------------------
 def get_db_connection () :
     global db_pool
 
-    while True :
-        if db_pool :
-            try:
-                db_connection = db_pool.get_connection ()
-                return (db_connection)
-            except mariadb.Error as e:
-                print(f"Error connecting to MariaDB Platform: {e}")
-            try:
-                db_pool.close ()
-            except :
-                pass
-        while True :
-            db_pool = False
-            time.sleep (5.0)
-            try:
-                db_pool = mariadb.ConnectionPool (
-                    pool_name='db_pool' ,
-                    pool_size=DB_CONFIG['POOLSIZE'] ,
-                    pool_reset_connection = False ,
-                    host=DB_CONFIG['HOSTNAME'] ,
-                    port=DB_CONFIG['PORT'] ,
-                    user=DB_CONFIG['USERNAME'] ,
-                    passwd=DB_CONFIG['PASSWORD'] ,
-                    database=DB_CONFIG['DATABASE']
-                    )
-            except mariadb.Error as e:
-                print(f"Error connecting to MariaDB Platform: {e}")
-                continue
-            break
-        # end db_pool
-    # end db_connection
+    try:
+        return (db_pool.get_connection ())
+    except mariadb.Error as e:
+        print(f"Error connecting to MariaDB Platform: {e}")
+        sys.exit(1)
 
 # end get_db_connection
 
@@ -411,31 +385,31 @@ def initialize () :
         sys.exit(1)
     print("logger server listening")
 
-    #try:
-        #db_pool = mariadb.ConnectionPool (  # initialize db connection pool
-            #pool_name='db_pool' ,
-            #pool_size=DB_CONFIG['POOLSIZE'] ,
-            #pool_reset_connection = False ,
-            #host=DB_CONFIG['HOSTNAME'] ,
-            #port=DB_CONFIG['PORT'] ,
-            #user=DB_CONFIG['USERNAME'] ,
-            #passwd=DB_CONFIG['PASSWORD'] ,
-            #database=DB_CONFIG['DATABASE']
-            #)
-    #except mariadb.Error as e:
+    try:
+        db_pool = mariadb.ConnectionPool (  # initialize db connection pool
+            pool_name='db_pool' ,
+            pool_size=DB_CONFIG['POOLSIZE'] ,
+            pool_reset_connection = False ,
+            host=DB_CONFIG['HOSTNAME'] ,
+            port=DB_CONFIG['PORT'] ,
+            user=DB_CONFIG['USERNAME'] ,
+            passwd=DB_CONFIG['PASSWORD'] ,
+            database=DB_CONFIG['DATABASE']
+            )
+        #except mariadb.Error as e:
         #print(f"Error MariaDB Platform: {e}")
     #except :
         #continue
-    thread_count_high_water = DB_CONFIG['POOLSIZE'] - 2
-    db_connection = get_db_connection ()
-    #---- Set start time, et. al.
-    ts_thread = threading.Thread (target=set_initialize_timestamp,
-                                    args=(get_db_connection(),))
-    ts_thread.start ()
-    ts_thread.join ()               # wait for thread to complete
-    #except mariadb.Error as e:
-        #print(f"Error MariaDB Platform: {e}")
-        #sys.exit(1)
+        thread_count_high_water = DB_CONFIG['POOLSIZE'] - 2
+        db_connection = get_db_connection ()
+        #---- Set start time, et. al.
+        ts_thread = threading.Thread (target=set_initialize_timestamp,
+                                        args=(get_db_connection(),))
+        ts_thread.start ()
+        ts_thread.join ()               # wait for thread to complete
+    except mariadb.Error as e:
+        print(f"Error MariaDB Platform: {e}")
+        sys.exit(1)
     print ('database connection pool initialized')
 
     allowed_actions ['ping']['handler'] = ping_handler

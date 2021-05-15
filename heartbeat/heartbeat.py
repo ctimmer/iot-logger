@@ -221,7 +221,7 @@ def send_heartbeat (address_port, interval, force):
     get_memory_info (heartbeat_data)
 
     result_json = json.dumps (heartbeat_message)    # dictionary to json
-    print (result_json)
+    #print (result_json)
     bytesToSend = str.encode (result_json)          # message length
     t_data.client_sender_socket.sendto (bytesToSend,
                                         address_port)
