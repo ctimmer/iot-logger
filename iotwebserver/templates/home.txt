@@ -7,7 +7,7 @@
     import json
 %>
 
-<title>IOT</title>
+<title>Heart Beat</title>
 
 <link rel="stylesheet"
     type="text/css"
@@ -15,15 +15,19 @@
     href="templates/iotweb.css"/>
 
 <script type="text/javascript">
+## This is javascript:
 var IOTWEB =
     {
     devices : ${json.dumps (devices)} ,
     log_date_cutoff : '${log_date_cutoff}' ,
-    heartbeat_interval : 20 ,           // low for testing
-    heartbeat_active : false ,
-    heartbeat_timer : null ,
+    heartbeat_interval : 60 ,           // 1 minute
+    heartbeat_active : false ,          // Set in initialize function
+    heartbeat_timer : null ,            // Set in initialize function
+    heartbeat_warning_minutes : 11 ,
+    heartbeat_fail_minutes : 31 ,
     date_low : "0000-00-00 00:00:00" ,
-    last_json_reply : ""
+    last_json_reply : "" ,
+    error_codes : ${json.dumps (error_codes)}
     } ;
 </script>
 
@@ -32,30 +36,44 @@ var IOTWEB =
 
 </head>
 
-<body>
-<div>IOTWEBSERVER</div>
+<body class="body_class">
+
+<div class="heading_div">Heartbeat Monitor</div>
 
 <table>
 
 <tr>
 <td>
+<div
+  class="devices_heading"
+  >
 Devices
 <span
   id="heartbeat_toggle_button"
   class="heartbeat_toggle_class heartbeat_on"
   onclick="heartbeat_toggle () ;"
   ></span>
+</div>
 </td>
-<td>Display Area</td>
+<td>
+<div
+  class="display_area_heading"
+  onclick-"$(display_area).text ('') ;"
+  >
+Display Area
+</div>
+</td>
 </tr>
 
 <tr>
-<td>
+<td class="dev_list_td">
 <%include file="home_devices.txt" />
 </td>
 <td>
-<div id="display_area">
-Empty
+<div
+  id="display_area"
+  class="display_area"
+  >
 </div>
 </td>
 

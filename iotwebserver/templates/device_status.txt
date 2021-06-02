@@ -1,0 +1,164 @@
+
+<%
+    status_display = [
+            {                               # cpu_percent
+            'log_id' : 'cpu_percent' ,
+            'title' : "CPU Usage Percents" ,
+            'type' : '' ,
+            'fields' :
+                [
+                {
+                'field_id' : 'user' ,
+                'label' : "User" ,
+                'type' : "number"
+                } ,
+                {
+                'field_id' : 'nice' ,
+                'label' : "Nice" ,
+                'type' : "number"
+                } ,
+                {
+                'field_id' : 'system' ,
+                'label' : "System" ,
+                'type' : "number"
+                }
+                ] # end fields
+            } , # end cpu_percent
+            {                               # memory_useage
+            "log_id" : "virtual_memory" ,
+            'title' : "Memory Usage" ,
+            'type' : '' ,
+            'fields' :
+                [
+                {
+                "field_id" : 'total' ,
+                'label' : "Total Memory" ,
+                'type' : "number"
+                } ,
+                {
+                "field_id" : 'available' ,
+                'label' : "Available Memory" ,
+                'type' : "number"
+                } ,
+                {
+                "field_id" : 'used' ,
+                'label' : "Used Memory" ,
+                'type' : "number"
+                } ,
+                {
+                "field_id" : 'free' ,
+                'label' : "Free Memory" ,
+                'type' : "number"
+                }
+                ]
+            } ,
+            {                               # disk_usage
+            'log_id' : 'disk_usage' ,
+            'title' : "Disk Usage" ,
+            'type' : 'array' ,
+            'fields' :
+                [
+                {
+                'field_id' : 'label' ,
+                'label' : "Disk" ,
+                'type' : "text"
+                } ,
+                {
+                'field_id' : 'path' ,
+                'label' : "Path" ,
+                'type' : "text"
+                } ,
+                {
+                'field_id' : 'total' ,
+                'label' : "Total (bytes)" ,
+                'type' : "number"
+                } ,
+                {
+                'field_id' : 'used' ,
+                'label' : "Used (bytes)" ,
+                'type' : "number"
+                } ,
+                {
+                'field_id' : 'free' ,
+                'label' : "Free (bytes)" ,
+                'type' : "number"
+                } 
+                ]
+            }
+        ] # end status_display
+
+%>
+<%!
+def test_key (key_val, dict) :
+    #print ("test_key")
+    #print (key_val)
+    #print (dict)
+    return (key_val in dict)
+
+%>
+
+<%def name="display_field(field_entry, log_id_entry)">
+% if test_key (field_entry['field_id'], log_id_entry) :
+<tr>
+<td></td>
+<td>
+${field_entry['label']}
+</td>
+<td>
+${log_id_entry[field_entry['field_id']]}
+</td>
+</tr>
+% endif
+</%def>
+
+<%def name="display_log_id(display_entry)">
+
+% if test_key (display_entry['log_id'], log_data['heartbeat']) :
+
+<%
+    log_id_data = log_data['heartbeat'][display_entry['log_id']]
+%>
+
+<tr>
+<td>
+${display_entry['title']}
+</td>
+<td colspan="2">
+Last Updated: ${log_id_data['last_update']}
+</td>
+<td></td>
+</tr>
+
+% if display_entry['type'] == 'array' :
+% for log_entry in log_data['heartbeat'][display_entry['log_id']]['log_array'] :
+% for field_entry in display_entry['fields']:
+${display_field(field_entry, log_entry)}
+% endfor
+% endfor
+
+% else :
+
+% for field_entry in display_entry['fields']:
+  ${display_field(field_entry, log_data['heartbeat'][display_entry['log_id']])}
+% endfor
+
+% endif
+
+% endif
+
+</%def>
+
+<div>
+Device Status: ${device_id}
+</div>
+
+<%doc>
+</%doc>
+<div>
+<table>
+% for display_entry in status_display:
+    ${display_log_id(display_entry)}
+% endfor
+</table>
+</div>
+

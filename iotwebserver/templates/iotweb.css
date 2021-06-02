@@ -2,16 +2,95 @@
  * iotweb.css
 */
 
+body
+  {
+  font-family: arial,Hlvetica,sans-serif ;
+  font-size: 1.5vw ;
+  border: 2px ;
+  margin: 0 ;
+  padding: 0 ;
+  }
+
+.body_class
+  {
+  border: 2px solid black ;
+  margin: 0 ;
+  padding: 0 ;
+  }
+
 .heartbeat_toggle_class
   {
   cursor: pointer ;
   }
 .heartbeat_on
   {
-  background-color : green ;
+  background-color : lightgreen ;
   }
 .heartbeat_off
   {
   background-color : red ;
   }
 
+.dev_list_td
+  {
+  vertical-align: top ;
+  }
+
+.activity_div_outer ,
+.activity_div_outer_on ,
+.activity_div_outer_prev ,
+.activity_div_outer_off
+  {
+  height: 2.0vw ;
+  width: 2.0vw ;
+  vertical-align: middle ;
+  border-radius: 0.2vw ;
+  position: relative ;
+  }
+.activity_div_outer_on
+  {
+  background-color: green ;
+  }
+.activity_div_outer_prev
+  {
+  background-color: lightgrey ;
+  }
+.activity_div_outer_off
+  {
+  background-color: transparent ;
+  }
+.activity_div_inner
+  {
+  height: 1.4vw ;
+  width: 1.4vw ;
+  font-size: smaller ;
+  text-align: center ;
+  vertical-align: middle ;
+  background-color: yellow ;
+  position: absolute ;
+  margin: 0.3vw ;
+  }
+
+.dev_heartbeat_good ,
+.dev_heartbeat_warning ,
+.dev_heartbeat_fail 
+  {
+  }
+.dev_heartbeat_good
+  {
+  background-color: lightgreen ;
+  }
+.dev_heartbeat_warning
+  {
+  background-color: orange ;
+  }
+.dev_heartbeat_fail 
+  {
+  background-color: red ;
+  }
+
+.dev_item_status_class
+  {
+  font-weight: bold ;
+  cursor: pointer ;
+  }

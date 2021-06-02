@@ -29,10 +29,15 @@ db_date_format = '%Y-%m-%d %H:%M:%S'
 low_date = "0000-00-00 00:00:00"
 initialize_timestamp = low_date
 
-errors = {
-    'db_error' : {'code' : -100 ,
+error_codes = {
+    'OK' :      {'code' : 0 ,
+                'system' : 'No error' ,
+                'user' : '' ,
+                'other' : ''} ,
+    'DB_ERROR' : {'code' : -100 ,
                 'system' : 'Database error' ,
-                'user' : 'There is a problem with the database'}
+                'user' : 'There is a problem with the database' ,
+                'other' : ''}
     }
 
 ################################################################################
@@ -167,15 +172,15 @@ def get_device_status (device_id, log_id) :
         cursor.execute (sql, (device_id,))
         row = cursor.fetchone ()
         cursor.close ()
-        log_id_data = {}
-        log_data = json.loads (row [2])
-        if log_id in log_data :
-            log_id_data [log_id] = log_data [log_id]
+        #log_id_data = {}
+        #log_data = json.loads (row [2])
+        #if log_id in log_data :
+            #log_id_data [log_id] = log_data [log_id]
         return_dict['reply'].append (
             {
             'device_id' : row [0] ,
             'last_log_date' : row[1].strftime (db_date_format) ,
-            'log_data' : log_id_data
+            'log_data' : json.loads (row [2])
             })
     except mariadb.Error as e:
         set_result_code (return_dict, -1, f"get_device_status: {e}")
@@ -397,12 +402,21 @@ def device_status_handler_t (request_dict) :
     else :
         status_dict = get_device_status (request_dict ['device_id'],
                                         low_date)   # get the results
-        mylookup = TemplateLookup(directories=['.'])
-        mytemplate = Template (filename='templates/device_status.txt',
+        try :
+            mylookup = TemplateLookup(directories=['.'])
+            mytemplate = Template (filename='templates/device_status.txt',
                                 module_directory='/tmp/mako_modules',
                                 lookup=mylookup)
+        except Exception as e :
+            print (e)
         template_dict = status_dict['reply'][0]     # First (only) entry
-        return_text = mytemplate.render(**template_dict)
+        #print ("dsht:", template_dict)
+        #print ("dsht:")
+        try :
+            return_text = mytemplate.render(**template_dict)
+            #print (return_text)
+        except Exception as e :
+            print (e)
 
     return (return_text)
 
@@ -460,7 +474,8 @@ def type_status_handler (request_dict) :
 #-------------------------------------------------------------------------------
 def home_page_handler (request_dict) :
 
-    #template_dict = initialize_json_return ()
+    global error_codes
+
     template_dict = {}
 
     device_list_ret = get_device_list ()
@@ -487,9 +502,9 @@ def home_page_handler (request_dict) :
         if device_id in template_dict['devices'] :
             template_dict['devices'][device_id]['log_data'] \
                 = status_entry ['log_data']
-            
+    template_dict['error_codes'] = error_codes
+
     # print ("==>td:", template_dict)
-    #return "hi"
 
     mylookup = TemplateLookup(directories=['.'])
     mytemplate = Template (filename='templates/home.txt',
@@ -654,6 +669,7 @@ class MyServer (http.server.SimpleHTTPRequestHandler):
         try :
             length = int (self.headers ['Content-Length'])
             post_data = self.rfile.read (length).decode ('utf-8')
+            # print (post_data)
             request_dict = json.loads (post_data)
             reply_text = request_handler (request_dict)
         except :

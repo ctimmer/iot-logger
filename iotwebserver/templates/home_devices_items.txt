@@ -1,7 +1,25 @@
 ##
+##
+##
+##
+<%!
+last_device_type = ""
+def type_changed (device_type) :
+    global last_device_type
+    if device_type == last_device_type :
+        return False
+    else :
+        last_device_type = device_type
+        return True
+%>
+##
 % for device in device_ids :
 <tr class="device_list_tr">
-<td class="device_list_type_td">${devices[device]['type']}</td>
+<td class="device_list_type_td">
+% if type_changed (devices[device]['type']) :
+${devices[device]['type']}
+% endif
+</td>
 <td class="device_list_id_td">
 <div
   id="dev_item_${device}"
@@ -11,22 +29,25 @@
 ${device}
 </div>
 </td>
+
 <td>
 <div
-  id="dev_item_update_${device}"
-  class="dev_item_update_class"
+  id="dev_activity_outer_${device}"
+  class="activity_div_outer_on"
   >
-U
+<div
+  id="dev_activity_inner_${device}"
+  class="activity_div_inner"
+  >A</div>
 </div>
 </td>
+
 <td>
 <div
-  id="dev_item_heartbeat_${device}"
-  class="dev_item_heartbeat_class"
+  id="dev_heartbeat_${device}"
+  class="dev_heartbeat_good"
   onclick="display_device_heartbeat ('${device}') ;"
-  >
-HeartBeat
-</div>
+  >Heart Beat</div>
 </td>
 <td>
 <div
@@ -40,6 +61,3 @@ Status
 </tr>
 % endfor
 
-
-
-## <td class="device_list_description_td">${devices[device]['description']}</td>

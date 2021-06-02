@@ -74,11 +74,15 @@ def get_disk_info (heartbeat_data, force):
         else:
             disk_accum = 0
 
-    disks_dict = {}
-    heartbeat_data ['disks'] = disks_dict
+    disks_array = []
+    disks_dict = {'log_array' : disks_array}
+    heartbeat_data ['disk_usage'] = disks_dict
     for path, label in PATHS:
-        disk_dict = {}
-        disks_dict [label] = disk_dict
+        disk_dict = {
+            'label' : label ,
+            'path' : path
+            }
+        disks_array.append (disk_dict)
         disk_usage = psutil.disk_usage(path)
         st = os.statvfs(path)
         total_inode = st.f_files
@@ -200,7 +204,18 @@ def get_cpu_percent_info (heartbeat_data, interval):
     cpu_percent_dict ['steal'] = cpu_t_percent.steal
     cpu_percent_dict ['guest'] = cpu_t_percent.guest
     cpu_percent_dict ['guest_nice'] = cpu_t_percent.guest_nice
-    cpu_percent_dict ['load'] = psutil.cpu_percent(True, 1)
+
+    cpu_load_dict = []
+    cpu_percent_dict ['load'] = cpu_load_dict
+    load_data = psutil.cpu_percent(True, 1)
+    cpu_number = 0
+    for cpu_load in load_data :
+        cpu_load_dict.append (
+            {
+            'cpu' : cpu_number ,
+            'cpu_load' : cpu_load
+            })
+        cpu_number += 1 ;
 
 # end get_cpu_percent_info
 
@@ -325,9 +340,8 @@ def initialize () :
     server_address_port = (logger_ip, SERVER_CONFIG ['LISTENER_PORT'])
 
     if 'REPORT_INTERVAL' in CLIENT_CONFIG :
-        report_interval = CLIENT_CONIG ['REPORT_INTERVAL']
-
-    report_interval = 5             # TEST
+        report_interval = CLIENT_CONFIG ['REPORT_INTERVAL']
+    ##report_interval = 8             # low for testing
 
 # end initialize
 

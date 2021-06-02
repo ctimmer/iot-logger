@@ -1,4 +1,6 @@
 
-<div>
+<div
+  class="dev_list_header"
+  >
 <table class="device_list_table">
 
