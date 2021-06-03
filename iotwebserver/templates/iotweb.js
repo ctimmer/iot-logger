@@ -138,18 +138,20 @@ console.log ("heartbeat_update: " + JSON.stringify (data)) ;
 heartbeat_update: {"result":{"error_code":0},"reply":[{"device_id":"boinc001","last_log_date":"2021-04-13 19:33:40","log_data":{"heartbeat":{"cpu_percent":{"user":0,"nice":99.9,"system":0.1,"idle":0,"iowait":0,"irq":0,"softirq":0,"steal":0,"guest":0,"guest_nice":0,"load":
 */
 
-$(".activity_div_outer_prev")
+$(".activity_div_outer_prev")                   // adjust activity settings
     .removeClass ("activity_div_outer_prev")
     .addClass ("activity_div_outer_off") ;
 $(".activity_div_outer_on")
     .removeClass ("activity_div_outer_on")
     .addClass ("activity_div_outer_prev") ;
 
-$.each (data.reply ,
+$.each (data.reply ,                            // Update reported devices
         function (idx, device_data)
         {
         heartbeat_update_device (device_data) ;
         }) ;
+
+IOTWEB.log_date_cutoff = data.log_date_cutoff ; // for next update
 
 heartbeat_probe () ;
 
