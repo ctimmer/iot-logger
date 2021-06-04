@@ -395,30 +395,23 @@ def device_status_handler (request_dict) :
 def device_status_handler_t (request_dict) :
 
     if not 'device_id' in request_dict :
-        return_text = set_result_code \
-                        (initialize_json_return () , # missing device_id
-                        -1 ,
-                        "Missing 'device_id' entry")
-    else :
-        status_dict = get_device_status (request_dict ['device_id'],
-                                        low_date)   # get the results
-        try :
-            mylookup = TemplateLookup(directories=['.'])
-            mytemplate = Template (filename='templates/device_status.txt',
-                                module_directory='/tmp/mako_modules',
-                                lookup=mylookup)
-        except Exception as e :
-            print (e)
-        template_dict = status_dict['reply'][0]     # First (only) entry
-        #print ("dsht:", template_dict)
-        #print ("dsht:")
-        try :
-            return_text = mytemplate.render(**template_dict)
-            #print (return_text)
-        except Exception as e :
-            print (e)
+        return ("Missing 'device_id' entry")
+    status_dict = get_device_status (request_dict ['device_id'],
+                                    low_date)   # get the results
+    template_dict = status_dict['reply'][0]     # First (only) entry
+    #print ("dsht:", template_dict)
+    if not 'heartbeat' in template_dict['log_data'] :
+        return ("No DEVICE heartbeat information available")
 
-    return (return_text)
+    try :
+        mylookup = TemplateLookup(directories=['.'])
+        mytemplate = Template (filename='templates/device_status.txt',
+                            module_directory='/tmp/mako_modules',
+                            lookup=mylookup)
+        return (mytemplate.render(**template_dict))
+    except Exception as e :
+        print (e)
+        return ("Template setup/render failed")
 
 # end device_status_handler_t
 
