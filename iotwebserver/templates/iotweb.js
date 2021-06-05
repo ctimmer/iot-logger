@@ -48,16 +48,16 @@ function heartbeat_toggle ()
 
 if (IOTWEB.heartbeat_active)
     {
-    $(heartbeat_toggle_button).html ("[Heart Beat: Off]") ;
-    $(heartbeat_toggle_button)
+    $(heartbeat_toggle_indicator).html ("Off") ;
+    $(heartbeat_toggle_indicator)
         .removeClass("heartbeat_on")
         .addClass("heartbeat_off") ;
     IOTWEB.heartbeat_active = false ;
     }
 else
     {
-    $(heartbeat_toggle_button).html ("[Heart Beat: On]") ;
-    $(heartbeat_toggle_button)
+    $(heartbeat_toggle_indicator).html ("On") ;
+    $(heartbeat_toggle_indicator)
         .removeClass("heartbeat_off")
         .addClass("heartbeat_on") ;
     IOTWEB.heartbeat_active = true ;

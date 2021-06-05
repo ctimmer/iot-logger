@@ -38,24 +38,29 @@ var IOTWEB =
 
 <body class="body_class">
 
+<div class="heartbeat_div">
 <div class="heading_div">Heartbeat Monitor</div>
 
-<table>
+<table class="devices_table">
 
 <tr>
-<td>
+<td class="devices_column_1">
 <div
   class="devices_heading"
   >
-Devices
 <span
   id="heartbeat_toggle_button"
-  class="heartbeat_toggle_class heartbeat_on"
+  class="heartbeat_toggle_span"
   onclick="heartbeat_toggle () ;"
-  ></span>
+  >
+Devices [HeartBeat:
+<span
+  id="heartbeat_toggle_indicator"
+  class="heartbeat_on"
+  ></span>]</span>
 </div>
 </td>
-<td>
+<td class="devices_column_2">
 <div
   class="display_area_heading"
   onclick-"$(display_area).text ('') ;"
@@ -69,14 +74,15 @@ Display Area
 <td class="dev_list_td">
 <%include file="home_devices.txt" />
 </td>
-<td>
+<td class="display_area_td">
 <div
   id="display_area"
-  class="display_area"
+  class="display_area_div"
   >
 </div>
 </td>
 
 </table>
+</div>
 
 </body>

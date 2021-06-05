@@ -23,7 +23,7 @@ ${devices[device]['type']}
 <td class="device_list_id_td">
 <div
   id="dev_item_${device}"
-  class="dev_item_class"
+  class="dev_item_class dev_item_status_class"
   onclick="display_device_status ('${device}') ;"
   >
 ${device}
@@ -47,16 +47,7 @@ ${device}
   id="dev_heartbeat_${device}"
   class="dev_heartbeat_good"
   onclick="display_device_heartbeat ('${device}') ;"
-  >Heart Beat</div>
-</td>
-<td>
-<div
-  id="dev_item_status_${device}"
-  class="dev_item_status_class"
-  onclick="display_device_status ('${device}') ;"
-  >
-Status
-</div>
+  >HB</div>
 </td>
 </tr>
 % endfor

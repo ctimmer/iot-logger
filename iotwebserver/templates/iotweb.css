@@ -2,12 +2,19 @@
  * iotweb.css
 */
 
+html ,
+body
+  {
+  height: 100% ;
+  }
+html 
+  {
+  margin: 2px ;
+  }
 body
   {
   font-family: arial,Hlvetica,sans-serif ;
   font-size: 1.5vw ;
-  border: 2px ;
-  margin: 0 ;
   padding: 0 ;
   }
 
@@ -18,6 +25,57 @@ body
   padding: 0 ;
   }
 
+.heartbeat_div
+  {
+  border: 2px ;
+  }
+
+.heading_div
+  {
+  font-size: large ;
+  background-color: #2697ed ;
+  color: #fff ;
+  text-align: center ;
+  vertical-align: middle ;
+  }
+
+.devices_table
+  {
+  width: 100% ;
+  }
+.devices_column_1
+  {
+  width: 30% ;
+  }
+.devices_column_2
+  {
+  width: 70% ;
+  }
+
+.devices_heading
+  {
+  font-size: larger ;
+  text-align: center ;
+  vertical-align: middle ;
+  background-color: #2697ed ;
+  color: #fff ;
+  text-align: center ;
+  }
+.display_area_heading
+  {
+  font-size: larger ;
+  text-align: center ;
+  vertical-align: middle ;
+  width: 100% ;
+  background-color: #2697ed ;
+  color: #fff ;
+  text-align: center ;
+  }
+
+.heartbeat_toggle_span
+  {
+  cursor: pointer ;
+  }
 .heartbeat_toggle_class
   {
   cursor: pointer ;
@@ -34,6 +92,29 @@ body
 .dev_list_td
   {
   vertical-align: top ;
+  }
+
+.device_list_table
+  {
+  }
+.device_list_tr
+  {
+  }
+.device_list_type_td
+  {
+  width: 40% ;
+  }
+.device_list_id_td
+  {
+  width: 50% ;
+  }
+.device_list_activity_td
+  {
+  width: 5% ;
+  }
+.device_list_heartbeat_td
+  {
+  width: 5% ;
   }
 
 .activity_div_outer ,
@@ -94,3 +175,40 @@ body
   font-weight: bold ;
   cursor: pointer ;
   }
+
+.display_area_td
+  {
+  vertical-align: top ;
+  }
+.display_area_div
+  {
+  text-align: left ;
+  margin-top: 2.0vh ;
+  margin-left: 1.0vw ;
+  margin-right: 1.0vw ;
+  }
+.display_area_status_div
+  {
+  text-align: center ;
+  padding-bottom: 1.5vh ;
+  }
+.display_area_status_span
+  {
+  font-size: bigger ;
+  font-weight: bold ;
+  color: red ;
+  }
+
+.display_status_id_label
+  {
+  font-size: bigger ;
+  font-weight: bold ;
+  }
+.display_status_label
+  {
+  font-weight: bold ;
+  }
+.display_status_value
+  {
+  }
+

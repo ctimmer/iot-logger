@@ -3,4 +3,19 @@
   class="dev_list_header"
   >
 <table class="device_list_table">
+<tr class="device_list_tr">
 
+<td class="device_list_type_td">
+Type
+</td>
+<td class="device_list_id_td">
+Device ID
+</td>
+<td class="device_list_activity_td">
+Act
+</td>
+<td class="device_list_heartbeat_td">
+HB
+</td>
+
+</tr>

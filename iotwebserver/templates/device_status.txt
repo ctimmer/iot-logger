@@ -2,6 +2,39 @@
 <%
     status_display = [
             {                               # cpu_percent
+            'log_id' : 'cpu_times' ,
+            'title' : "CPU Usage Times" ,
+            'type' : '' ,
+            'fields' :
+                [
+                {
+                'field_id' : 'user' ,
+                'label' : "User" ,
+                'type' : "number"
+                } ,
+                {
+                'field_id' : 'nice' ,
+                'label' : "Nice" ,
+                'type' : "number"
+                } ,
+                {
+                'field_id' : 'system' ,
+                'label' : "System" ,
+                'type' : "number"
+                } ,
+                {
+                'field_id' : 'idle' ,
+                'label' : "Idle" ,
+                'type' : "number"
+                } ,
+                {
+                'field_id' : 'iowait' ,
+                'label' : "IO wait" ,
+                'type' : "number"
+                }
+                ] # end fields
+            } , # end cpu_times
+            {                               # cpu_percent
             'log_id' : 'cpu_percent' ,
             'title' : "CPU Usage Percents" ,
             'type' : '' ,
@@ -97,20 +130,30 @@ def test_key (key_val, dict) :
 
 %>
 
+## -----------------------------------------------------------------------------
+## display_field
+## -----------------------------------------------------------------------------
 <%def name="display_field(field_entry, log_id_entry)">
 % if test_key (field_entry['field_id'], log_id_entry) :
 <tr>
 <td></td>
 <td>
+<div class="display_status_label">
 ${field_entry['label']}
+</div>
 </td>
 <td>
+<div class="display_status_value">
 ${log_id_entry[field_entry['field_id']]}
+</div>
 </td>
 </tr>
 % endif
 </%def>
 
+## -----------------------------------------------------------------------------
+## display_log_id
+## -----------------------------------------------------------------------------
 <%def name="display_log_id(display_entry)">
 
 % if test_key (display_entry['log_id'], log_data['heartbeat']) :
@@ -121,7 +164,9 @@ ${log_id_entry[field_entry['field_id']]}
 
 <tr>
 <td>
+<div class="display_status_id_label">
 ${display_entry['title']}
+</dev>
 </td>
 <td colspan="2">
 Last Updated: ${log_id_data['last_update']}
@@ -148,8 +193,10 @@ ${display_field(field_entry, log_entry)}
 
 </%def>
 
-<div>
+<div class="display_area_status_div">
+<span class="display_area_status_span">
 Device Status: ${device_id}
+</span>
 </div>
 
 <%doc>
