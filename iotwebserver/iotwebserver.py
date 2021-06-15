@@ -29,15 +29,23 @@ db_date_format = '%Y-%m-%d %H:%M:%S'
 low_date = "0000-00-00 00:00:00"
 initialize_timestamp = low_date
 
-error_codes = {
+error_ids = {
     'OK' :      {'code' : 0 ,
                 'system' : 'No error' ,
-                'user' : '' ,
+                'user' : 'No error' ,
                 'other' : ''} ,
-    'DB_ERROR' : {'code' : -100 ,
+    'ACTION_MISSING' :  {'code' : -1 ,
+                'system' : 'Action missing from request message' ,
+                'user' : 'Action identifier required'} ,
+    'ACTION_MISSING' :  {'code' : -2 ,
+                'system' : "Action requested was not in 'action_dict'" ,
+                'user' : 'Action identifier unknown'} ,
+    'DATABASE' : {'code' : -100 ,
                 'system' : 'Database error' ,
-                'user' : 'There is a problem with the database' ,
-                'other' : ''}
+                'user' : 'There is a problem with the database'} ,
+    'UNKNOWN' : {"code" : -999 ,
+                "system" : "Unknow error reply" ,
+                "user" : "Don't know what went wrong"} 
     }
 
 ################################################################################
@@ -86,6 +94,26 @@ def set_result_code (return_dict, code, message) :
     return (return_dict)
 
 # end set_result_code
+
+#-------------------------------------------------------------------------------
+# error_reply_json
+#-------------------------------------------------------------------------------
+def error_reply_json (error_id, error_message) :
+    reply = ''
+
+    return reply
+
+# end error_reply_json
+
+#-------------------------------------------------------------------------------
+# error_reply_html
+#-------------------------------------------------------------------------------
+def error_reply_html (error_id, error_message) :
+    reply = ''
+
+    return reply
+
+# end error_reply_html
 
 #-------------------------------------------------------------------------------
 # copy_log_to_reply
@@ -467,7 +495,7 @@ def type_status_handler (request_dict) :
 #-------------------------------------------------------------------------------
 def home_page_handler (request_dict) :
 
-    global error_codes
+    global error_ids
 
     template_dict = {}
 
@@ -495,7 +523,7 @@ def home_page_handler (request_dict) :
         if device_id in template_dict['devices'] :
             template_dict['devices'][device_id]['log_data'] \
                 = status_entry ['log_data']
-    template_dict['error_codes'] = error_codes
+    template_dict['error_codes'] = error_ids
 
     # print ("==>td:", template_dict)
 
@@ -647,12 +675,6 @@ class MyServer (http.server.SimpleHTTPRequestHandler):
 
         get_data = request_handler (request_dict)
         self.send_reply (request_dict['action'], get_data)
-        #--- Old:
-            #get_data = get_handler (parse_qs (path_dict.query))
-            #self.send_response (200)
-            #self.send_header ("Content-type", "text/html")
-            #self.end_headers ()
-            #self.wfile.write (bytes (get_data, "utf-8"))
 
 #---- Inputs:
 #----   json formatted reqest message

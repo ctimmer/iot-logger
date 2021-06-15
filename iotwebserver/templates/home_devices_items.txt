@@ -12,7 +12,9 @@ def type_changed (device_type) :
         last_device_type = device_type
         return True
 %>
-##
+## -----------------------------------------------------------------------------
+## Devices
+## -----------------------------------------------------------------------------
 % for device in device_ids :
 <tr class="device_list_tr">
 <td class="device_list_type_td">
@@ -22,33 +24,40 @@ ${devices[device]['type']}
 </td>
 <td class="device_list_id_td">
 <div
-  id="dev_item_${device}"
-  class="dev_item_class dev_item_status_class"
-  onclick="display_device_status ('${device}') ;"
-  >
-${device}
-</div>
-</td>
-
-<td>
-<div
   id="dev_activity_outer_${device}"
   class="activity_div_outer_on"
+  onclick="display_device_status ('${device}') ;"
   >
-<div
-  id="dev_activity_inner_${device}"
-  class="activity_div_inner"
-  >A</div>
+<div class="device_list_id_div">
+<span
+  id="device_button_${device}"
+  class="dev_heartbeat_good"
+##  class="activity_div_inner dev_heartbeat_good"
+>${device}</span>
+</div>
 </div>
 </td>
 
-<td>
-<div
-  id="dev_heartbeat_${device}"
-  class="dev_heartbeat_good"
-  onclick="display_device_heartbeat ('${device}') ;"
-  >HB</div>
-</td>
+## <td>
+## <div
+##   id="dev_activity_outer_${device}"
+##   class="activity_div_outer_on"
+##   >
+## <div
+##   id="dev_activity_inner_${device}"
+##   class="activity_div_inner"
+##   >A</div>
+## </div>
+## </td>
+
+## <td>
+## <div
+##   id="dev_heartbeat_${device}"
+##   class="dev_heartbeat_good"
+##   onclick="display_device_heartbeat ('${device}') ;"
+##   >HB</div>
+## </td>
+
 </tr>
 % endfor
 

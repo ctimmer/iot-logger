@@ -34,7 +34,7 @@ $.post("",
         })
     .fail (function ()
         {
-        alert( "error" );
+        consol.log ("display_device_status: fail");
         }) ;
 
 } // display_device_status
@@ -77,12 +77,12 @@ var minutes ;
 $.each (IOTWEB.devices ,
         function (device_id, device_data)
         {
+        dev_select = "#device_button_" + device_id ;
 //console.log (JSON.stringify (device_data)) ;
 //console.log (device_data.heartbeat_last_check_in) ;
         date_diff = date_stamp - device_data.heartbeat_last_check_in ;
         minutes = Math.round (((date_diff % 86400000) % 3600000) / 60000) ;
 //console.log (minutes.toString()) ;
-        dev_select = "#dev_heartbeat_" + device_id ;
         $(dev_select)
             .removeClass ("dev_heartbeat_good"
                             + " dev_heartbeat_warning"

@@ -2,8 +2,7 @@
  * iotweb.css
 */
 
-html ,
-body
+html 
   {
   height: 100% ;
   }
@@ -33,7 +32,7 @@ body
 .heading_div
   {
   font-size: large ;
-  background-color: #2697ed ;
+  background-color: #FB9902 ;
   color: #fff ;
   text-align: center ;
   vertical-align: middle ;
@@ -57,7 +56,7 @@ body
   font-size: larger ;
   text-align: center ;
   vertical-align: middle ;
-  background-color: #2697ed ;
+  background-color: #FCCB1A ;
   color: #fff ;
   text-align: center ;
   }
@@ -67,7 +66,7 @@ body
   text-align: center ;
   vertical-align: middle ;
   width: 100% ;
-  background-color: #2697ed ;
+  background-color: #FCCB1A ;
   color: #fff ;
   text-align: center ;
   }
@@ -82,7 +81,7 @@ body
   }
 .heartbeat_on
   {
-  background-color : lightgreen ;
+  background-color : transparent ;
   }
 .heartbeat_off
   {
@@ -96,18 +95,47 @@ body
 
 .device_list_table
   {
+  background-color: #F7E0D4 ;
+  width: 100% ;
   }
 .device_list_tr
   {
   }
+.device_list_type_td_heading ,
 .device_list_type_td
   {
+  text-align: right ;
   width: 40% ;
+  }
+.device_list_type_td_heading
+  {
+  font-weight: bolder ;
+  padding-right: 0.5vw ;
+  }
+.device_list_id_td_heading ,
+.device_list_id_td
+  {
+  text-align: left ;
+  width: 60% ;
+  }
+.device_list_id_td_heading
+  {
+  font-weight: bolder ;
+  padding-left: 0.5vw ;
   }
 .device_list_id_td
   {
-  width: 50% ;
+  /* height: 2.0vw ; */
   }
+.device_list_id_div
+  {
+  text-align: left ;
+  vertical-align: middle ;
+  padding: 0.3vw ;
+  corsor: inhearit ;
+  }
+
+/*
 .device_list_activity_td
   {
   width: 5% ;
@@ -116,21 +144,22 @@ body
   {
   width: 5% ;
   }
+*/
 
 .activity_div_outer ,
 .activity_div_outer_on ,
 .activity_div_outer_prev ,
 .activity_div_outer_off
   {
-  height: 2.0vw ;
-  width: 2.0vw ;
+  /* height: 4.0vw ; */
   vertical-align: middle ;
   border-radius: 0.2vw ;
   position: relative ;
+  cursor: pointer ;
   }
 .activity_div_outer_on
   {
-  background-color: green ;
+  background-color: darkgrey ;
   }
 .activity_div_outer_prev
   {
@@ -142,13 +171,15 @@ body
   }
 .activity_div_inner
   {
-  height: 1.4vw ;
-  width: 1.4vw ;
+  /* height: 1.4vw ; */
+  /* width: 1.4vw ; */
+  height: 1.0vw ;
+  cursor: pointer ;
   font-size: smaller ;
   text-align: center ;
   vertical-align: middle ;
   background-color: yellow ;
-  position: absolute ;
+  /* position: absolute ; */
   margin: 0.3vw ;
   }
 
@@ -159,7 +190,9 @@ body
   }
 .dev_heartbeat_good
   {
-  background-color: lightgreen ;
+  background-color: #F7E0D4 ;
+  /* background-color: lightgreen ; */
+  corsor: inherit ;
   }
 .dev_heartbeat_warning
   {
@@ -178,6 +211,7 @@ body
 
 .display_area_td
   {
+  background-color: #F7E0D4 ;
   vertical-align: top ;
   }
 .display_area_div

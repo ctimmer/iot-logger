@@ -65,23 +65,53 @@
                 [
                 {
                 "field_id" : 'total' ,
-                'label' : "Total Memory" ,
-                'type' : "number"
+                'label' : "Total" ,
+                'type' : "number" ,
+                'formatter' : byte_size_formatter
                 } ,
                 {
                 "field_id" : 'available' ,
-                'label' : "Available Memory" ,
-                'type' : "number"
+                'label' : "Available" ,
+                'type' : "number" ,
+                'formatter' : byte_size_formatter
                 } ,
                 {
                 "field_id" : 'used' ,
-                'label' : "Used Memory" ,
-                'type' : "number"
+                'label' : "Used" ,
+                'type' : "number" ,
+                'formatter' : byte_size_formatter
                 } ,
                 {
                 "field_id" : 'free' ,
-                'label' : "Free Memory" ,
-                'type' : "number"
+                'label' : "Free" ,
+                'type' : "number" ,
+                'formatter' : byte_size_formatter
+                }
+                ]
+            } ,
+            {                               # swap memory 
+            "log_id" : "memory" ,
+            'title' : "Swap Memory" ,
+            'type' : '' ,
+            'fields' :
+                [
+                {
+                "field_id" : 'total' ,
+                'label' : "Total" ,
+                'type' : "number" ,
+                'formatter' : byte_size_formatter
+                } ,
+                {
+                "field_id" : 'used' ,
+                'label' : "Used" ,
+                'type' : "number" ,
+                'formatter' : byte_size_formatter
+                } ,
+                {
+                "field_id" : 'free' ,
+                'label' : "Free" ,
+                'type' : "number" ,
+                'formatter' : byte_size_formatter
                 }
                 ]
             } ,
@@ -103,18 +133,21 @@
                 } ,
                 {
                 'field_id' : 'total' ,
-                'label' : "Total (bytes)" ,
-                'type' : "number"
+                'label' : "Total" ,
+                'type' : "number" ,
+                'formatter' : byte_size_formatter
                 } ,
                 {
                 'field_id' : 'used' ,
-                'label' : "Used (bytes)" ,
-                'type' : "number"
+                'label' : "Used" ,
+                'type' : "number" ,
+                'formatter' : byte_size_formatter
                 } ,
                 {
                 'field_id' : 'free' ,
-                'label' : "Free (bytes)" ,
-                'type' : "number"
+                'label' : "Free" ,
+                'type' : "number" ,
+                'formatter' : byte_size_formatter
                 } 
                 ]
             }
@@ -127,7 +160,24 @@ def test_key (key_val, dict) :
     #print (key_val)
     #print (dict)
     return (key_val in dict)
+# end test_key
 
+def byte_size_formatter (num) :
+    ret = str (num)
+##    if num > 999999999999999 :
+##        print ("too big")
+    if num > 999999999999 :         # TBs
+        ret = str (round ((num / 1000000000000), 1)) + " TB"
+    elif num > 999999999 :          # GBs
+        ret = str (round ((num / 1000000000), 1)) + " GB"
+    elif num > 999999 :             # MBs
+        ret = str (round ((num / 1000000), 1)) + " MB"
+    elif num > 999 :                # KBs
+        ret = str (round ((num / 1000), 1)) + " KB"
+    else :                          # Bs
+        ret = str (num) + " B"
+    return (ret)
+# end byte_size_formatter 
 %>
 
 ## -----------------------------------------------------------------------------
@@ -144,7 +194,11 @@ ${field_entry['label']}
 </td>
 <td>
 <div class="display_status_value">
+% if test_key ('formatter', field_entry) :
+${field_entry['formatter'](log_id_entry[field_entry['field_id']])}
+% else :
 ${log_id_entry[field_entry['field_id']]}
+% endif
 </div>
 </td>
 </tr>

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Mar 29, 2021 at 07:58 PM
+-- Generation Time: Jun 07, 2021 at 07:59 PM
 -- Server version: 10.3.27-MariaDB-0+deb10u1
 -- PHP Version: 7.3.27-1~deb10u1
 
@@ -27,12 +27,12 @@ SET time_zone = "+00:00";
 --
 
 CREATE TABLE `devices` (
-  `device_key` bigint(11) NOT NULL,
+  `device_key` bigint(20) NOT NULL,
   `device_id` varchar(40) NOT NULL,
   `type_key` bigint(20) NOT NULL DEFAULT 99,
   `description` varchar(1023) NOT NULL DEFAULT '',
   `device_retention_days` int(11) NOT NULL DEFAULT 367,
-  `log_date` timestamp NULL DEFAULT NULL,
+  `log_date` timestamp NOT NULL DEFAULT '1970-01-01 10:00:01',
   `log_data` longtext NOT NULL DEFAULT '{}'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -138,7 +138,7 @@ ALTER TABLE `groups`
 -- AUTO_INCREMENT for table `devices`
 --
 ALTER TABLE `devices`
-  MODIFY `device_key` bigint(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=128;
+  MODIFY `device_key` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=136;
 --
 -- AUTO_INCREMENT for table `device_types`
 --

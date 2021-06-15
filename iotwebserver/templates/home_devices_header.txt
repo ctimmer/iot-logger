@@ -5,17 +5,17 @@
 <table class="device_list_table">
 <tr class="device_list_tr">
 
-<td class="device_list_type_td">
+<td class="device_list_type_td device_list_type_td_heading">
 Type
 </td>
-<td class="device_list_id_td">
+<td class="device_list_id_td device_list_id_td_heading">
 Device ID
 </td>
-<td class="device_list_activity_td">
-Act
-</td>
-<td class="device_list_heartbeat_td">
-HB
-</td>
+## <td class="device_list_activity_td">
+## Act
+## </td>
+## <td class="device_list_heartbeat_td">
+## HB
+## </td>
 
 </tr>
