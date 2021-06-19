@@ -164,9 +164,10 @@ def test_key (key_val, dict) :
 
 def byte_size_formatter (num) :
     ret = str (num)
-##    if num > 999999999999999 :
-##        print ("too big")
-    if num > 999999999999 :         # TBs
+    if num > 999999999999999 :
+        ret = str (round ((num / 1000000000000000), 1)) + " PB"
+        ##print ("too big")
+    elif num > 999999999999 :       # TBs
         ret = str (round ((num / 1000000000000), 1)) + " TB"
     elif num > 999999999 :          # GBs
         ret = str (round ((num / 1000000000), 1)) + " GB"

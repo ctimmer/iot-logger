@@ -111,16 +111,18 @@ function heartbeat_update_device (device_data)
 //console.log ("heartbeat_update_device") ;
 var device_id = device_data.device_id ;
 
-$("#dev_activity_outer_" + device_id)
+if (! IOTWEB.devices[device_id])
+    {
+    return ;                    // Unknown device - skip
+    }
+
+$("#dev_activity_outer_" + device_id)   // Clear activity classes
     .removeClass ("activity_div_outer_prev activity_div_outer_off")
     .addClass ("activity_div_outer_on") ;
 
 $.each (device_data.log_data.heartbeat ,
         function (key_id, key_data)
         {
-//console.log (device_id) ;
-//console.log (key_id) ;
-//console.log (JSON.stringify (IOTWEB.devices[device_id])) ;
         IOTWEB.devices[device_id]['log_data']['heartbeat'][key_id] = key_data ;
         }) ;
 
@@ -184,7 +186,7 @@ $.post("",
     .done (heartbeat_update)
     .fail (function ()
         {
-        alert( "error" );
+        consol.log ("heartbeat_check: fail");
         }) ;
 
 } // heartbeat_check
