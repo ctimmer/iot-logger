@@ -18,6 +18,7 @@ import json
 
 from mako.template import Template
 from mako.lookup import TemplateLookup
+from mako import exceptions
 
 from loggerconfig import *
 
@@ -131,7 +132,7 @@ def copy_log_to_reply (device_log, reply_dict, log_id, date_cutoff) :
         temp_dict[log_id][log_key] = log_dict [log_id][log_key]
         copy_count += 1
     if copy_count <= 0 :
-        return (Fale)                   # No entries copied
+        return (False)                  # No entries copied
     reply_dict [log_id] = temp_dict
     return (True)                       # At least 1 entry copied
 
@@ -139,28 +140,39 @@ def copy_log_to_reply (device_log, reply_dict, log_id, date_cutoff) :
 
 #-------------------------------------------------------------------------------
 # get_device_list
+# Inputs:
+#   device_id - If set returns only 1 or none device, "" returns all devices
 #-------------------------------------------------------------------------------
-def get_device_list () :
+def get_device_list (device_id) :
     global db_connection
-    sql = "SELECT" \
+    sql = 'WITH' \
+            + ' device_table (device_id) as (SELECT %s)' \
+        + "SELECT" \
             + " devices.device_key" \
             + ",devices.device_id" \
             + ",devices.description" \
             + ",devices.log_date" \
             + ",COALESCE (device_types.name, 'Unknown')" \
-            + " FROM" \
-            + " devices" \
+        + " FROM" \
+            + " device_table" \
+            + ",devices" \
             + " LEFT OUTER JOIN" \
             + " device_types" \
             + " ON" \
             + " device_types.type_key = devices.type_key" \
-            + " ORDER BY" \
+        + " WHERE" \
+            + ' (' \
+            + ' device_table.device_id = ""' \
+            + ' OR' \
+            + ' devices.device_id = device_table.device_id' \
+            + ' )' \
+        + " ORDER BY" \
             + " devices.device_id"
 
     return_dict = initialize_json_return ()
     try :
         cursor = db_connection.cursor (prepared=True, buffered=True)
-        cursor.execute (sql)
+        cursor.execute (sql, (device_id,))
         result = cursor.fetchall ()
         for row in result :
             return_dict['reply'].append (
@@ -295,6 +307,73 @@ def get_device_type_list () :
 # end get_device_type_list
 
 #-------------------------------------------------------------------------------
+# get_device_all
+#-------------------------------------------------------------------------------
+def get_device_all (log_id, type_name) :
+    global db_connection
+    sql = 'WITH' \
+            + ' type_table (type) as (SELECT %s)' \
+        + ' SELECT' \
+            + ' devices.device_id AS device_id' \
+            + ',devices.log_date' \
+            + ',devices.log_data' \
+            + ',device_types.name' \
+        + ' FROM' \
+            + ' type_table' \
+            + ',devices' \
+            + ',device_types' \
+        + ' WHERE' \
+            + ' devices.type_key = device_types.type_key' \
+            + ' AND' \
+            + ' (' \
+            + ' type_table.type = ""' \
+            + ' OR' \
+            + ' device_types.name = type_table.type' \
+            + ' )' \
+        + ' ORDER BY' \
+            + ' devices.device_id'
+
+    return_dict = initialize_json_return ()
+    next_date_cutoff = low_date
+    #set_result_code (return_dict, 1, "OK")
+    #print (return_dict)
+    try :
+        cursor = db_connection.cursor (buffered=True)
+        #cursor.execute (sql, ('heartbeat', type_name))
+        cursor.execute (sql, (type_name, 'heartbeat'))
+        result = cursor.fetchall ()
+        cursor.close ()
+        for row in result :
+            last_log_date = row[1].strftime (db_date_format)
+            #if last_log_date <= log_date_cutoff :
+                #continue
+            if next_date_cutoff < last_log_date :
+                next_date_cutoff = last_log_date
+            log_dict = {}
+            if not copy_log_to_reply (row[2],
+                                log_dict,
+                                log_id,
+                                low_date):
+                                ## log_date_cutoff):
+                continue
+            reply_log_data = {}
+            reply_log_data['device_id'] = row [0]
+            reply_log_data['last_log_date'] = row[1].strftime(db_date_format)
+            #reply_log_data['log_data'] = row [2]
+            reply_log_data['log_data'] = json.loads (row [2])
+            if type_name != "" :
+                reply_log_data['type'] = row [3]
+            return_dict['reply'].append (reply_log_data)
+        #db_connection.commit ()
+        return_dict ['log_date_cutoff'] = next_date_cutoff
+    except mariadb.Error as e:
+        set_result_code (return_dict, -1, f"get_device_all: {e}")
+
+    return (return_dict)
+
+# end get_device_all
+
+#-------------------------------------------------------------------------------
 # get_type_status
 #-------------------------------------------------------------------------------
 def get_type_status (type_name, log_id, log_date_cutoff) :
@@ -355,24 +434,6 @@ def get_type_status (type_name, log_id, log_date_cutoff) :
 
 # end get_type_status
 
-#-------------------------------------------------------------------------------
-# get_type_status_all
-#-------------------------------------------------------------------------------
-def get_type_status_all (type_name, log_id) :
-
-    return (get_type_status (type_name, log_id, low_date))
-
-# end get_type_status_all
-
-#-------------------------------------------------------------------------------
-# get_device_status_all
-#-------------------------------------------------------------------------------
-def get_device_status_all (log_id) :
-
-    return (get_type_status ("", log_id, low_date))
-
-# end get_device_status_all
-
 ################################################################################
 # Server functions
 ################################################################################
@@ -381,21 +442,66 @@ def get_device_status_all (log_id) :
 # device_list_handler
 #-----------------------------------
 def device_list_handler (request_dict) :
+    device_id = ""
 
-    return (get_device_list ())
+    if 'device_id' in request_dict :
+        device_id = request_dict ['device_id']
+
+    return (get_device_list (device_id))
 
 # end device_list_handler
 
 #-----------------------------------
-# device_list_handler_t
+# device_list_handler_t - not implemented
 #-----------------------------------
 def device_list_handler_t (request_dict) :
+    device_id = ""
 
-    template_dict =  get_device_list ()
+    if 'device_id' in request_dict :
+        device_id = request_dict ['device_id']
+
+    template_dict =  get_device_list (device_id)
 
     ### Call mako template
 
     return (not_implemented)
+
+# end device_list_handler_t
+
+#-----------------------------------
+# device_list_item_handler_t -
+#-----------------------------------
+def device_list_item_handler_t (request_dict) :
+    #print ("device_list_item_handler_t:" )
+
+    if not 'device_id' in request_dict :
+        print ("device_list_item_handler_t: missing device_id")
+        return ("")
+
+    device_list_ret = get_device_list (request_dict ['device_id'])
+
+    template_dict = {}
+    template_dict['devices'] = {}
+    template_dict['device_ids'] = []
+    for device_entry in device_list_ret['reply'] :
+        template_dict ['devices'][device_entry['device_id']] = {
+            'device_key' : device_entry['device_key'] ,
+            'description' : device_entry['description'] ,
+            'type' : device_entry['type'] 
+            }
+        template_dict['device_ids'].append (device_entry['device_id'])
+
+    try:
+        mylookup = TemplateLookup(directories=['.'])
+        mytemplate = Template (filename='templates/home_devices_items.txt',
+                                module_directory='/tmp/mako_modules',
+                                lookup=mylookup)
+        html = mytemplate.render (**template_dict)
+        return (html)
+    except:
+        print(exceptions.text_error_template().render())
+
+    return ""
 
 # end device_list_handler_t
 
@@ -467,10 +573,9 @@ def device_status_changes_handler (request_dict) :
 # end device_status_changes_handler
 
 #-----------------------------------
-# type_status_handler
+# type_status_handler - not implemented
 #-----------------------------------
 def type_status_handler (request_dict) :
-# get_type_status (type_name, log_id, log_date_cutoff) :
 
     date_cutoff = low_date
     if not 'type' in request_dict :
@@ -484,9 +589,9 @@ def type_status_handler (request_dict) :
     if 'date_cutoff' in request_dict :                         # use cutoff date
         date_cutoff = request_dict ['date_cutoff']
 
-    return (get_type_status (request_dict ['type'] ,           # get the results
-                            request_dict ['log_id'] ,
-                            date_cutoff))
+    #return (get_type_status (request_dict ['type'] ,          # get the results
+                            #request_dict ['log_id'] ,
+                            #date_cutoff))
 
 # end type_status_handler
 
@@ -499,7 +604,7 @@ def home_page_handler (request_dict) :
 
     template_dict = {}
 
-    device_list_ret = get_device_list ()
+    device_list_ret = get_device_list ("")
     # print ( device_list_ret['reply'] )
     template_dict['devices'] = {}
     template_dict['device_ids'] = []
@@ -513,7 +618,7 @@ def home_page_handler (request_dict) :
         template_dict['device_ids'].append (device_entry['device_id'])
     # print (template_dict)
 
-    device_status = get_device_status_all ('heartbeat')
+    device_status = get_device_all ('heartbeat', "")
     #print ("ds:", device_status)
     #template_dict ['device_status'] = device_status ['reply']
     template_dict ['log_date_cutoff'] = device_status ['log_date_cutoff']
@@ -539,11 +644,6 @@ def home_page_handler (request_dict) :
 # maintenence_page_handler
 #-------------------------------------------------------------------------------
 def maintenence_page_handler (request_dict) :
-
-    #ret = get_type_status_all ("Computer", "heartbeat")      ## TESTING
-    #print (ret)
-    #ret = get_type_status ("Computer", "heartbeat", ret['log_date_cutoff'])
-    #print (ret)
 
     mytemplate = Template (filename='templates/maintenence.txt',
                         module_directory='/tmp/mako_modules')
@@ -581,10 +681,14 @@ action_dict = {
         'handler' : device_list_handler_t ,
         'content_type' : 'text/html'
         } ,
-    'type_status' : {
-        'handler' : type_status_handler ,
-        'content_type' : 'application/json'
+    'device_list_item_handler_t' : {
+        'handler' : device_list_item_handler_t ,
+        'content_type' : 'text/html'
         } ,
+    #'type_status' : {
+        #'handler' : type_status_handler ,
+        #'content_type' : 'application/json'
+        #} ,
     'device_status' : {
         'handler' : device_status_handler ,
         'content_type' : 'application/json'
@@ -667,10 +771,12 @@ class MyServer (http.server.SimpleHTTPRequestHandler):
         path_dict = urlparse(self.path)
         request_dict = parse_qs (path_dict.query)
         if path_dict.path == '/' :
-            request_dict ['action'] = 'home'
+            request_dict ['action'] = 'home'        # show device status
+        elif path_dict.path == '/kiosk' : 
+            request_dict ['action'] = 'kiosk'       # kiosk type interface
         elif path_dict.path == '/maintenence' :
-            request_dict ['action'] = 'maintenence'
-        else :
+            request_dict ['action'] = 'maintenence' # update interface
+        else :                                      # js/css/images etc.
             return http.server.SimpleHTTPRequestHandler.do_GET(self)
 
         get_data = request_handler (request_dict)
