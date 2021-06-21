@@ -1,4 +1,19 @@
+##
+##
+##
 
+<tr class="device_list_tr">
+
+<td class="device_list_type_td device_list_type_td_heading">
+New Devices:
+</td>
+<td class="device_list_id_td device_list_id_td_heading">
+</td>
+## Any new devices will be added here:
+
+</tr>
+
+</tbody>
 </table>
 </div>
 

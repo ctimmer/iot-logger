@@ -38,26 +38,6 @@ ${devices[device]['type']}
 </div>
 </td>
 
-## <td>
-## <div
-##   id="dev_activity_outer_${device}"
-##   class="activity_div_outer_on"
-##   >
-## <div
-##   id="dev_activity_inner_${device}"
-##   class="activity_div_inner"
-##   >A</div>
-## </div>
-## </td>
-
-## <td>
-## <div
-##   id="dev_heartbeat_${device}"
-##   class="dev_heartbeat_good"
-##   onclick="display_device_heartbeat ('${device}') ;"
-##   >HB</div>
-## </td>
-
 </tr>
 % endfor
 
