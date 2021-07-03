@@ -34,7 +34,7 @@ $.post("",
         })
     .fail (function ()
         {
-        console.log ("display_device_status: fail");
+        consol.log ("display_device_status: fail");
         }) ;
 
 } // display_device_status
@@ -112,8 +112,8 @@ function heartbeat_add_device (device_data)
 var device_id = device_data.device_id ;
 var request ;
 
-//---- Initialize device:
-IOTWEB.devices[device_id] = {'log_data':{'heartbeat':{}}} ;
+IOTWEB.devices[device_id]['log_data']['heartbeat'] = {} ;
+    //= device_data.log_data.heartbeat ;
 
 request =
     {
@@ -221,7 +221,7 @@ $.post("",
     .done (heartbeat_update)
     .fail (function ()
         {
-        console.log ("heartbeat_check: fail");
+        consol.log ("heartbeat_check: fail");
         }) ;
 
 } // heartbeat_check
