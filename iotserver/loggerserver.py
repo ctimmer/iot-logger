@@ -20,6 +20,7 @@ UDPServerSocket = 0
 
 allowed_actions = {
     "alert" : {} ,
+    "environment" : {} ,
     "heartbeat" : {} ,
     "notification" : {} ,
     "ping" : {
@@ -428,5 +429,5 @@ except KeyboardInterrupt:
 except Exception as e :
     print ()
 
-db_pool.close ()
+#db_pool.close ()
 

@@ -3,6 +3,10 @@
   class="dev_list_header"
   >
 <table class="device_list_table">
+
+<tbody
+  id="device_list_tbody"
+  >
 <tr class="device_list_tr">
 
 <td class="device_list_type_td device_list_type_td_heading">
@@ -11,11 +15,5 @@ Type
 <td class="device_list_id_td device_list_id_td_heading">
 Device ID
 </td>
-## <td class="device_list_activity_td">
-## Act
-## </td>
-## <td class="device_list_heartbeat_td">
-## HB
-## </td>
 
 </tr>

@@ -35,18 +35,6 @@ cpu_times_accum_trigger = 3600  # Every hour
 cpu_times_accum = 0
 
 #-------------------------------------------------------------------------------
-# sanitize_for_json
-#-------------------------------------------------------------------------------
-def sanitize_for_json (text_data):
-
-    if text_data == "None":
-        return ("false")            # 'None' to 'false'
-
-    return (text_data)              # No change
-
-# end sanitize_for_json
-
-#-------------------------------------------------------------------------------
 # initialize_client_message
 #-------------------------------------------------------------------------------
 def initialize_client_message (action):

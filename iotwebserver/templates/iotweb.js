@@ -34,7 +34,7 @@ $.post("",
         })
     .fail (function ()
         {
-        consol.log ("display_device_status: fail");
+        console.log ("display_device_status: fail");
         }) ;
 
 } // display_device_status
@@ -104,6 +104,40 @@ $.each (IOTWEB.devices ,
 } // heartbeat_probe //
 
 //------------------------------------------------------------------------------
+// heartbeat_add_device
+//------------------------------------------------------------------------------
+function heartbeat_add_device (device_data)
+{
+//console.log ("heartbeat_add_device") ;
+var device_id = device_data.device_id ;
+var request ;
+
+//---- Initialize device:
+IOTWEB.devices[device_id] = {'log_data':{'heartbeat':{}}} ;
+
+request =
+    {
+    'action' : 'device_list_item_handler_t' ,
+    'device_id' : device_id
+    } ;
+
+$.post("",
+        JSON.stringify (request) ,
+        null ,
+        "html")
+    .done (function (data)
+        {
+        //console.log (data)
+        $('#device_list_tbody').append (data)
+        })
+    .fail (function ()
+        {
+        console.log ("heartbeat_add_device: fail");
+        }) ;
+
+} // heartbeat_add_device //
+
+//------------------------------------------------------------------------------
 // heartbeat_update_device
 //------------------------------------------------------------------------------
 function heartbeat_update_device (device_data)
@@ -113,7 +147,8 @@ var device_id = device_data.device_id ;
 
 if (! IOTWEB.devices[device_id])
     {
-    return ;                    // Unknown device - skip
+    heartbeat_add_device (device_data)
+    //return ;                    // Unknown device - skip
     }
 
 $("#dev_activity_outer_" + device_id)   // Clear activity classes
@@ -186,7 +221,7 @@ $.post("",
     .done (heartbeat_update)
     .fail (function ()
         {
-        consol.log ("heartbeat_check: fail");
+        console.log ("heartbeat_check: fail");
         }) ;
 
 } // heartbeat_check
