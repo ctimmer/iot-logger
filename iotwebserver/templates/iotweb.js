@@ -34,7 +34,7 @@ $.post("",
         })
     .fail (function ()
         {
-        consol.log ("display_device_status: fail");
+        console.log ("display_device_status: fail");
         }) ;
 
 } // display_device_status
@@ -112,8 +112,13 @@ function heartbeat_add_device (device_data)
 var device_id = device_data.device_id ;
 var request ;
 
+<<<<<<< HEAD
+//---- Initialize device:
+IOTWEB.devices[device_id] = {'log_data':{'heartbeat':{}}} ;
+=======
 IOTWEB.devices[device_id]['log_data']['heartbeat'] = {} ;
     //= device_data.log_data.heartbeat ;
+>>>>>>> ad3c8e4de1f61d452efae7d3a65e58186578b3f2
 
 request =
     {
@@ -221,7 +226,11 @@ $.post("",
     .done (heartbeat_update)
     .fail (function ()
         {
+<<<<<<< HEAD
+        console.log ("heartbeat_check: fail");
+=======
         consol.log ("heartbeat_check: fail");
+>>>>>>> ad3c8e4de1f61d452efae7d3a65e58186578b3f2
         }) ;
 
 } // heartbeat_check
