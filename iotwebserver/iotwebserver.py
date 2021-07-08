@@ -13,6 +13,7 @@ from urllib.parse import parse_qs
 
 import mariadb, sys
 
+import datetime
 import time
 import json
 
@@ -434,6 +435,93 @@ def get_type_status (type_name, log_id, log_date_cutoff) :
 
 # end get_type_status
 
+#-------------------------------------------------------------------------------
+# get_log_history
+# Inputs:
+#   device_id - device identifier to be returned (e.g. 'myserver'), required
+#   log_id - log identifier to be returned (e.g. 'heartbeat'), required
+#   filter (all optional):
+#     {
+#     'start_date' - Starting date, default: today - 30 days
+#       # Format 'YYYY-MM-DD'
+#     'end_date' - Ending date, default: today
+#       # Format 'YYYY-MM-DD'
+#     'entry_list' - List of log_id entries to be selected, default: all entries
+#       # Format ['ent1', 'ent2', ...]
+#     }
+#-------------------------------------------------------------------------------
+def get_log_history (device_id, log_id, filter) :
+    global db_connection
+    end_date = datetime.date.today()
+    start_date = end_date + + datetime.timedelta(-30)
+    entry_list = None
+    sql = 'SELECT' \
+            + ' devices.device_id' \
+            + ',device_log.log_date' \
+            + ',device_log.log_data' \
+        + ' FROM' \
+            + ' devices' \
+            + ',device_log' \
+        + ' WHERE' \
+            + ' devices.device_id = %s' \
+            + ' AND' \
+            + ' device_log.device_key = devices.device_key ' \
+            + ' AND' \
+            + ' device_log.log_date BETWEEN %s AND %s' \
+        + ' ORDER BY' \
+            + ' device_log.log_date'
+
+    return_dict = initialize_json_return ()
+    #print ("RD:", return_dict)
+    sql_start_date = start_date.strftime("%Y-%m-%d 00:00")
+    sql_end_date = end_date.strftime("%Y-%m-%d 23:59")
+    #sql_start_date = start_date.strftime("%Y-%m-%d")    ## TEST
+    #sql_end_date = end_date.strftime("%Y-%m-%d")    ## TEST
+    if 'entry_list' in filter :
+        entry_list = filter['entry_list']
+
+    #print ("device_id:", device_id)
+    #print ("log_id:", log_id)
+    #print (sql_start_date, "thru", sql_end_date)
+    try :
+        ret_count = 0
+        cursor = db_connection.cursor (buffered=True)
+        cursor.execute (sql, (device_id, sql_start_date, sql_end_date))
+        while True :
+            row = cursor.fetchone ()
+            if not row :
+                break
+            ret_count += 1
+            row_device_id = row [0]
+            row_log_date = row [1]
+            row_log_data = json.loads (row [2])
+            if not log_id in row_log_data :
+                continue
+            entry_count = 0
+            if entry_list == None :
+                return_item = row_log_data[log_id]
+                entry_count = 1
+            else :
+                return_item = {}
+                for entry_id in entry_list :
+                    #print ("entry_id:", entry_id)
+                    if entry_id in row_log_data [log_id] :
+                        return_item [entry_id] = row_log_data [log_id][entry_id]
+                        entry_count += 1
+            if entry_count > 0 :
+                return_item['log_date'] = row_log_date.strftime(db_date_format)
+                return_dict['reply'].append (return_item)
+        # end while
+        cursor.close ()
+        print ("ret_cnt:" , ret_count)
+    except mariadb.Error as e:
+        print (e)
+        set_result_code (return_dict, -1, f"get_type_status: {e}")
+
+    return (return_dict)
+
+# end get_log_history
+
 ################################################################################
 # Server functions
 ################################################################################
@@ -595,6 +683,27 @@ def type_status_handler (request_dict) :
 
 # end type_status_handler
 
+#-----------------------------------
+# log_history_handler
+#-----------------------------------
+def log_history_handler (request_dict) :
+
+    if not 'device_id' in request_dict :
+        return (set_result_code (initialize_json_return () ,# missing device_id
+                                -1 ,
+                                "Missing 'device_id' entry"))
+    if not 'log_id' in request_dict :
+        return (set_result_code (initialize_json_return () ,# missing log_id
+                                -1 ,
+                                "Missing 'log_id' entry"))
+
+    reply_dict = get_log_history (request_dict ['device_id'],
+                                    request_dict ['log_id'],
+                                    request_dict)   # get the results
+    return (json.dumps (reply_dict))
+
+# end log_history_handler
+
 #-------------------------------------------------------------------------------
 # home_page_handler
 #-------------------------------------------------------------------------------
@@ -695,6 +804,10 @@ action_dict = {
         } , 
     'device_status_changes' : {
         'handler' : device_status_changes_handler ,
+        'content_type' : 'application/json'
+        } , 
+    'log_history' : {
+        'handler' : log_history_handler ,
         'content_type' : 'application/json'
         } , 
     'device_status_t' : {
@@ -851,9 +964,24 @@ def initialize () :
 # main
 #-------------------------------------------------------------------------------
 
+
 if __name__ == "__main__":        
 
     initialize ()
+    #db_connection = mariadb.connect (host=DB_CONFIG['HOSTNAME'] ,
+                                        #port=DB_CONFIG['PORT'] ,
+                                        #user=DB_CONFIG['USERNAME'] ,
+                                        #passwd=DB_CONFIG['PASSWORD'] ,
+                                        #database=DB_CONFIG['DATABASE'])
+    #ret_test = get_log_history ("dev400", "heartbeat", {
+                ##'entry_list': ['cpu_percent','sensors']
+                #})
+    ##ret_test = get_log_history ("MS4301", "environment", {
+                ##'entry_list': ['cpu_percent','sensors']
+                ##})
+    #print ("0:", ret_test['reply'][0])
+    #print ("1:", ret_test['reply'][1])
+    #exit ()
 
     try:
         iot_web_server.serve_forever()

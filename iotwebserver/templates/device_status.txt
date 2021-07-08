@@ -2,7 +2,7 @@
 <%
     status_display = [
             {                               # cpu_percent
-            'log_id' : 'cpu_times' ,
+            'log_entry' : 'cpu_times' ,
             'title' : "CPU Usage Times" ,
             'type' : '' ,
             'fields' :
@@ -35,7 +35,7 @@
                 ] # end fields
             } , # end cpu_times
             {                               # cpu_percent
-            'log_id' : 'cpu_percent' ,
+            'log_entry' : 'cpu_percent' ,
             'title' : "CPU Usage Percents" ,
             'type' : '' ,
             'fields' :
@@ -58,7 +58,7 @@
                 ] # end fields
             } , # end cpu_percent
             {                               # memory_useage
-            "log_id" : "virtual_memory" ,
+            "log_entry" : "virtual_memory" ,
             'title' : "Memory Usage" ,
             'type' : '' ,
             'fields' :
@@ -90,7 +90,7 @@
                 ]
             } ,
             {                               # swap memory 
-            "log_id" : "memory" ,
+            "log_entry" : "memory" ,
             'title' : "Swap Memory" ,
             'type' : '' ,
             'fields' :
@@ -116,7 +116,7 @@
                 ]
             } ,
             {                               # disk_usage
-            'log_id' : 'disk_usage' ,
+            'log_entry' : 'disk_usage' ,
             'title' : "Disk Usage" ,
             'type' : 'array' ,
             'fields' :
@@ -211,15 +211,18 @@ ${log_id_entry[field_entry['field_id']]}
 ## -----------------------------------------------------------------------------
 <%def name="display_log_id(display_entry)">
 
-% if test_key (display_entry['log_id'], log_data['heartbeat']) :
+% if test_key (display_entry['log_entry'], log_data['heartbeat']) :
 
 <%
-    log_id_data = log_data['heartbeat'][display_entry['log_id']]
+    log_id_data = log_data['heartbeat'][display_entry['log_entry']]
 %>
 
 <tr>
 <td>
-<div class="display_status_id_label">
+<div
+  class="display_status_id_label"
+  onclick="log_history ('${device_id}', 'heartbeat', ['${display_entry['log_entry']}']) ;"
+  >
 ${display_entry['title']}
 </dev>
 </td>
@@ -230,7 +233,7 @@ Last Updated: ${log_id_data['last_update']}
 </tr>
 
 % if display_entry['type'] == 'array' :
-% for log_entry in log_data['heartbeat'][display_entry['log_id']]['log_array'] :
+% for log_entry in log_data['heartbeat'][display_entry['log_entry']]['log_array'] :
 % for field_entry in display_entry['fields']:
 ${display_field(field_entry, log_entry)}
 % endfor
@@ -239,7 +242,7 @@ ${display_field(field_entry, log_entry)}
 % else :
 
 % for field_entry in display_entry['fields']:
-  ${display_field(field_entry, log_data['heartbeat'][display_entry['log_id']])}
+  ${display_field(field_entry, log_data['heartbeat'][display_entry['log_entry']])}
 % endfor
 
 % endif

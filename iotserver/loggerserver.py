@@ -126,8 +126,7 @@ def update_device_log (device_key, request_dict) :
         request_dict['action'] : request_dict [request_dict['action']]
         }
     log_json = json.dumps (log_dict)
-    # cursor = db_connection.cursor(prepared=True)
-    cursor = t_data.db_conn.cursor(prepared=True)
+    cursor = t_data.db_conn.cursor ()
     cursor.execute (sql,
                     (device_key,
                     t_data.current_timestamp,
@@ -140,34 +139,35 @@ def update_device_log (device_key, request_dict) :
 # update_device
 #-------------------------------------------------------------------------------
 def update_device (device_key, device_log_dict, request_dict) :
-    sql = ('UPDATE devices SET'
-            + ' log_date = %s'
-            + ', log_data = %s'
-            + ' WHERE device_key = %s')
+    sql = ("UPDATE devices"
+        + "  SET"
+            + " log_date = %s"
+            + ", log_data = %s"
+        + " WHERE"
+            + " device_key = %s")
 
     #print ()
     #print ('device_update:', device_key)
     #print (device_log_dict)
     #print (request_dict)
 
-    log_id = request_dict ['action']
+    update_device_log (device_key, request_dict)    # Add to log
+
+    log_id = request_dict ['action']                # Update device log data
     if log_id not in device_log_dict:
         device_log_dict [log_id] = {}
-    for log_entry_key in request_dict [log_id]:
+    for log_entry_key in request_dict [log_id]:     # update each log entry
         device_log_dict [log_id][log_entry_key] \
             = request_dict [log_id][log_entry_key]
         device_log_dict [log_id][log_entry_key]['last_update'] \
             = t_data.current_timestamp
-    #print (device_log_dict)
     device_log_json = json.dumps (device_log_dict)
-    # cursor = db_connection.cursor (prepared=True)
-    cursor = t_data.db_conn.cursor (prepared=True)
+    cursor = t_data.db_conn.cursor ()
     cursor.execute (sql,
                     (t_data.current_timestamp,
                     device_log_json,
                     device_key))
     cursor.close ()
-    update_device_log (device_key, request_dict)
 
 # end update_device
 

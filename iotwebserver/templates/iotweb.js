@@ -112,13 +112,10 @@ function heartbeat_add_device (device_data)
 var device_id = device_data.device_id ;
 var request ;
 
-<<<<<<< HEAD
 //---- Initialize device:
 IOTWEB.devices[device_id] = {'log_data':{'heartbeat':{}}} ;
-=======
-IOTWEB.devices[device_id]['log_data']['heartbeat'] = {} ;
+//IOTWEB.devices[device_id]['log_data']['heartbeat'] = {} ;
     //= device_data.log_data.heartbeat ;
->>>>>>> ad3c8e4de1f61d452efae7d3a65e58186578b3f2
 
 request =
     {
@@ -226,14 +223,50 @@ $.post("",
     .done (heartbeat_update)
     .fail (function ()
         {
-<<<<<<< HEAD
         console.log ("heartbeat_check: fail");
-=======
-        consol.log ("heartbeat_check: fail");
->>>>>>> ad3c8e4de1f61d452efae7d3a65e58186578b3f2
         }) ;
 
 } // heartbeat_check
+
+//------------------------------------------------------------------------------
+// log_history
+//------------------------------------------------------------------------------
+function log_history
+    (device_id,
+    log_id ,
+    entry_list)
+{
+console.log ("log_history") ;
+console.log (device_id) ;
+console.log (log_id) ;
+console.log (entry_list) ;
+
+var request =
+    {
+    'action' : 'log_history' ,
+    'device_id' : device_id ,
+    'log_id' : log_id
+    } ;
+if (entry_list)
+    {
+    request.entry_list = entry_list
+    }
+
+$.post("",
+        JSON.stringify (request) ,
+        null ,
+        "json")
+    .done (function (data)
+        {
+        console.log (JSON.stringify (data))
+        })
+    .fail (function ()
+        {
+        console.log ("log_history: fail");
+        }) ;
+
+} // log_history
+
 
 //------------------------------------------------------------------------------
 // initialize - Called when page is first loaded
