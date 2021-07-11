@@ -513,7 +513,7 @@ def get_log_history (device_id, log_id, filter) :
                 return_dict['reply'].append (return_item)
         # end while
         cursor.close ()
-        print ("ret_cnt:" , ret_count)
+        #print ("ret_cnt:" , ret_count)
     except mariadb.Error as e:
         print (e)
         set_result_code (return_dict, -1, f"get_type_status: {e}")

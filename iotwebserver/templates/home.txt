@@ -32,6 +32,8 @@ var IOTWEB =
 </script>
 
 <script type="text/javascript" src="/templates/jquery-3.6.0.min.js"></script>
+<script type="text/javascript" src="/templates/jquery.flot.js"></script>
+<script type="text/javascript" src="/templates/jquery.flot.time.js"></script>
 <script type="text/javascript" src="/templates/iotweb.js"></script>
 
 </head>
@@ -74,13 +76,70 @@ Display Area
 <td class="dev_list_td">
 <%include file="home_devices.txt" />
 </td>
+
 <td class="display_area_td">
 <div
-  id="display_area"
-  class="display_area_div"
+  id="display_area_tabs"
+  class="display_area_tabs_div"
   >
+<table>
+<tr>
+<td>
+<div
+  id="display_area_tab_status"
+  class="display_area_tab display_area_tab_on"
+  onclick="switch_display_tab ('status') ;"
+  >
+Status
 </div>
 </td>
+<td>
+<div
+  id="display_area_tab_chart"
+  class="display_area_tab display_area_tab_off"
+  onclick="switch_display_tab ('chart') ;"
+  >
+Chart
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div
+  id="display_area_status"
+  class="display_area_div"
+  style="display: block;"
+  >
+Status display
+</div>
+<div
+  id="display_area_chart"
+  class="display_area_div"
+  style="display: none;"
+  >
+<div
+  id="chart_1"
+  class="chart_placeholder"
+  style="display: none;"
+  ></div>
+<div
+  id="chart_2"
+  class="chart_placeholder"
+  style="display: none;"
+  ></div>
+<div
+  id="chart_3"
+  class="chart_placeholder"
+  style="display: none;"
+  ></div>
+<div
+  id="chart_4"
+  class="chart_placeholder"
+  style="display: none;"
+  ></div>
+</div>
+</td>
+</tr>
 
 </table>
 </div>

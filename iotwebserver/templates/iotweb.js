@@ -3,14 +3,34 @@
 //##############################################################################
 
 //------------------------------------------------------------------------------
+// switch_display_tab
+//------------------------------------------------------------------------------
+function switch_display_tab
+    (tab_id)
+{
+
+$(".display_area_tab_on")
+    .removeClass ("display_area_tab_on")
+    .addClass ("display_area_tab_off") ;
+$("#display_area_tab_" + tab_id)
+    .removeClass ("display_area_tab_off")
+    .addClass ("display_area_tab_on") ;
+
+$(".display_area_div").css ("display" ,"none")
+$("#display_area_" + tab_id).css ("display", "block")
+
+} // switch_display_tab //
+
+//------------------------------------------------------------------------------
 // display_device_status
 //------------------------------------------------------------------------------
 function display_device_status
     (device_id)
 {
-//alert ("display_device: " + device_id)
-// clear_display_area ()
-$(display_area).html ('') ;
+//console.log ("display_device: " + device_id)
+
+$(display_area_status).html ('') ;
+switch_display_tab ('status') ;
 
 if (! IOTWEB.devices[device_id])
     {
@@ -30,7 +50,7 @@ $.post("",
     .done (function (data)
         {
         // alert("success: " + data) ;
-        $(display_area).html (data) ;
+        $(display_area_status).html (data) ;
         })
     .fail (function ()
         {
@@ -229,6 +249,158 @@ $.post("",
 } // heartbeat_check
 
 //------------------------------------------------------------------------------
+// build_chart_plot_data
+//------------------------------------------------------------------------------
+function build_chart_plot_data
+    (entry_id ,
+    data_id ,
+    parms)
+{
+//console.log ('build_chart_plot_data') ;
+//console.log (entry_id) ;
+//console.log (data_id) ;
+//console.log (JSON.stringify (parms)) ;
+
+var plot_data = [] ;
+
+$.each (parms ,
+        function (idx, log_data)
+        {
+        date_key = new Date (log_data.log_date).getTime () ;    // to be fixed
+        if (log_data[entry_id])
+            {
+            if (log_data[entry_id][data_id])
+                {
+                plot_data.push ([date_key, log_data[entry_id][data_id]]) ;
+                }
+            }
+        }) ;
+
+return (plot_data) ;
+
+} // build_chart_plot_data //
+
+//------------------------------------------------------------------------------
+// build_history_chart
+//------------------------------------------------------------------------------
+function build_history_chart
+    (parms)
+{
+//console.log ("build_history_chart") ;
+
+var plot_data ;
+
+$("#" + parms.chart_id).css ("display", "block")
+
+plot_data = build_chart_plot_data
+    (parms.entry_id ,
+    parms.data_id ,
+    parms.data) ;
+var place_holder = $("#" + parms.chart_id) ;
+var plot_input_data =
+    [
+    {
+    "label" : parms.data_id ,
+    "color" : "black" ,
+    "data" : plot_data ,
+    "lines" :
+        {
+        "show" : true 
+        }
+    }
+    ] ;
+var plot_options =
+    {
+    "xaxis" :
+        {
+        mode: "time",
+        tickSize: [5, "day"], 
+        tickLength: 0,
+        axisLabel: "Date",
+        axisLabelUseCanvas: true,
+        axisLabelFontSizePixels: 12,
+        axisLabelFontFamily: 'Verdana, Arial',
+        axisLabelPadding: 10,
+        color: "black"
+        } ,
+    "yaxis" :
+        {
+        position: "left",
+        tickSize: [500000000], 
+        min: 0,
+        max: 8000000000,
+        color: "black",
+        axisLabel: "Bytes",
+        axisLabelUseCanvas: true,
+        axisLabelFontSizePixels: 12,
+        axisLabelFontFamily: 'Verdana, Arial',
+        axisLabelPadding: 3       
+        }
+    }
+
+if (parms.min)
+    {
+    plot_options.yaxis.min = parms.min ;
+    }
+if (parms.max)
+    {
+    plot_options.yaxis.max = parms.max ;
+    }
+
+$.plot (place_holder, plot_input_data, plot_options) ;
+
+} // build_history_chart
+
+//------------------------------------------------------------------------------
+// log_history_chart
+//------------------------------------------------------------------------------
+function log_history_chart
+    (parms)
+{
+//console.log ('log_history_chart') ;
+//console.log (parms.device_id) ;
+//console.log (parms.log_id) ;
+//console.log (JSON.stringify (parms.data)) ;
+
+$(".chart_place_holder").css ("display" ,"none")
+
+var entry_id = "virtual_memory" ;
+var chart_parameters =
+    {
+    "device_id" : parms.device_id ,
+    "log_id" : parms.log_id ,
+    "entry_id" : entry_id ,
+    "data" : parms.data.reply ,
+    "min" : 0 ,
+    "max" : 8000000000
+    } ;
+
+if (chart_parameters.data.length > 0)
+    {
+    if (chart_parameters.data[0][entry_id].total)
+        {
+        chart_parameters.max = chart_parameters.data[0][entry_id].total ;
+        }
+    }
+
+switch_display_tab ('chart') ;
+chart_parameters.entry_id = entry_id ;
+
+chart_parameters.data_id = "available" ;
+chart_parameters.chart_id = "chart_1" ;
+build_history_chart (chart_parameters) ;
+
+chart_parameters.data_id = "used" ;
+chart_parameters.chart_id = "chart_2" ;
+build_history_chart (chart_parameters) ;
+
+chart_parameters.data_id = "free" ;
+chart_parameters.chart_id = "chart_3" ;
+build_history_chart (chart_parameters) ;
+
+} // log_history_chart //
+
+//------------------------------------------------------------------------------
 // log_history
 //------------------------------------------------------------------------------
 function log_history
@@ -236,10 +408,10 @@ function log_history
     log_id ,
     entry_list)
 {
-console.log ("log_history") ;
-console.log (device_id) ;
-console.log (log_id) ;
-console.log (entry_list) ;
+//console.log ("log_history") ;
+//console.log (device_id) ;
+//console.log (log_id) ;
+//console.log (entry_list) ;
 
 var request =
     {
@@ -247,9 +419,16 @@ var request =
     'device_id' : device_id ,
     'log_id' : log_id
     } ;
+var chart_parameters =
+    {
+    'device_id' : device_id ,
+    'log_id' : log_id
+    } ;
+
 if (entry_list)
     {
-    request.entry_list = entry_list
+    request.entry_list = entry_list ;
+    chart_parameters.entry_list = entry_list ;
     }
 
 $.post("",
@@ -258,11 +437,13 @@ $.post("",
         "json")
     .done (function (data)
         {
-        console.log (JSON.stringify (data))
+        var parameters = chart_parameters ;
+        parameters.data = data ;
+        log_history_chart (parameters) ;
         })
     .fail (function ()
         {
-        console.log ("log_history: fail");
+        console.log ("log_history: fail") ;
         }) ;
 
 } // log_history
