@@ -27,6 +27,7 @@ var IOTWEB =
     heartbeat_fail_minutes : 31 ,
     date_low : "0000-00-00 00:00:00" ,
     last_json_reply : "" ,
+    plot : new Array () ,
     error_codes : ${json.dumps (error_codes)}
     } ;
 </script>
@@ -34,6 +35,9 @@ var IOTWEB =
 <script type="text/javascript" src="/templates/jquery-3.6.0.min.js"></script>
 <script type="text/javascript" src="/templates/jquery.flot.js"></script>
 <script type="text/javascript" src="/templates/jquery.flot.time.js"></script>
+<script type="text/javascript" src="/templates/jquery.flot.symbol.js"></script>
+<script type="text/javascript" src="/templates/jquery.flot.selection.js"></script>
+<script type="text/javascript" src="/templates/jquery.flot.axislabels.js"></script>
 <script type="text/javascript" src="/templates/iotweb.js"></script>
 
 </head>
@@ -118,21 +122,49 @@ Status display
   style="display: none;"
   >
 <div
+  name="chart_heading"
+  id="chart_1_heading"
+  class="chart_heading"
+  style="display: none;"
+  ></div>
+<div
+  name="chart_place_holder"
   id="chart_1"
   class="chart_placeholder"
   style="display: none;"
   ></div>
 <div
+  name="chart_heading"
+  id="chart_2_heading"
+  class="chart_heading"
+  style="display: none;"
+  ></div>
+<div
+  name="chart_place_holder"
   id="chart_2"
   class="chart_placeholder"
   style="display: none;"
   ></div>
 <div
+  name="chart_heading"
+  id="chart_3_heading"
+  class="chart_heading"
+  style="display: none;"
+  ></div>
+<div
+  name="chart_place_holder"
   id="chart_3"
   class="chart_placeholder"
   style="display: none;"
   ></div>
 <div
+  name="chart_heading"
+  id="chart_4_heading"
+  class="chart_heading"
+  style="display: none;"
+  ></div>
+<div
+  name="chart_place_holder"
   id="chart_4"
   class="chart_placeholder"
   style="display: none;"

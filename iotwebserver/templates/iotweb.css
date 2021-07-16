@@ -88,13 +88,23 @@ body
 .display_area_tab_off
   {
   background-color : transparent ;
-  border-bottom: 1px solid black ;
+  /* border-bottom: 1px solid black ; */
+  cursor: pointer ;
   }
 
+.chart_heading
+  {
+  font-size: larger ;
+  text-align: center ;
+  vertical-align: middle ;
+  width: 60.0vw ;
+  height: 3.0vh ;
+  cursor: pointer ;
+  }
 .chart_placeholder
   {
   width: 60.0vw ;
-  height: 25.0vh ;
+  height: 30.0vh ;
   }
 
 .heartbeat_toggle_span
@@ -263,6 +273,7 @@ body
   {
   font-size: bigger ;
   font-weight: bold ;
+  cursor: pointer ;
   }
 .display_status_label
   {

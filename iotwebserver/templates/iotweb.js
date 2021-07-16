@@ -281,73 +281,163 @@ return (plot_data) ;
 } // build_chart_plot_data //
 
 //------------------------------------------------------------------------------
+// byte_formatter
+//------------------------------------------------------------------------------
+function byte_formatter
+    (val, axis)
+{
+//console.log ("BF:" + val.toString() + " " + JSON.stringify(axis)) ;
+//console.log ("BF:" + val.toString()) ;
+
+var multiplier = 10 ;
+var ret_val = val / 1000000000 ;
+var ret_val = Math.round(ret_val * multiplier) / multiplier;
+
+return (ret_val.toString()) ;
+
+} // byte_formatter //
+
+//------------------------------------------------------------------------------
 // build_history_chart
 //------------------------------------------------------------------------------
 function build_history_chart
     (parms)
 {
 //console.log ("build_history_chart") ;
+var plot_idx = parms.plot_idx ;
+var plot_heading = $('[name="chart_heading"]')[plot_idx] ;
+var select_fun ;
 
-var plot_data ;
+var plot_data = build_chart_plot_data
+                    (parms.entry_id ,
+                    parms.data_id ,
+                    parms.data) ;
 
-$("#" + parms.chart_id).css ("display", "block")
-
-plot_data = build_chart_plot_data
-    (parms.entry_id ,
-    parms.data_id ,
-    parms.data) ;
-var place_holder = $("#" + parms.chart_id) ;
-var plot_input_data =
+IOTWEB.plot[plot_idx].data =
     [
     {
-    "label" : parms.data_id ,
+    //"label" : parms.data_id ,
     "color" : "black" ,
     "data" : plot_data ,
     "lines" :
         {
-        "show" : true 
+        show : true ,
+        lineWidth: 2,
+        shadowSize: 0
+        } ,
+    points :
+        {
+        show: false
         }
     }
     ] ;
-var plot_options =
+
+IOTWEB.plot[plot_idx].options =
     {
+    "grid" :
+        {  
+        hoverable: true ,
+        backgroundColor: { colors: ["#96CBFF", "#75BAFF"] }
+        },
     "xaxis" :
         {
         mode: "time",
-        tickSize: [5, "day"], 
-        tickLength: 0,
-        axisLabel: "Date",
+        //tickSize: [5, "day"], 
+        //tickLength: 0,
+        axisLabel: "Date/Time",
         axisLabelUseCanvas: true,
-        axisLabelFontSizePixels: 12,
+        axisLabelFontSizePixels: 10,
         axisLabelFontFamily: 'Verdana, Arial',
-        axisLabelPadding: 10,
+        axisLabelPadding: 5,
         color: "black"
         } ,
     "yaxis" :
         {
         position: "left",
         tickSize: [500000000], 
+        tickFormatter: byte_formatter ,
         min: 0,
         max: 8000000000,
         color: "black",
-        axisLabel: "Bytes",
+        axisLabel: "GigaBytes",
         axisLabelUseCanvas: true,
-        axisLabelFontSizePixels: 12,
+        axisLabelFontSizePixels: 10,
         axisLabelFontFamily: 'Verdana, Arial',
-        axisLabelPadding: 3       
+        axisLabelPadding: 2       
+        } ,
+    "selection" :
+        {
+        mode: "x"
         }
+    }
+
+IOTWEB.plot[plot_idx].place_holder
+    = $('[name="chart_place_holder"]')[plot_idx] ;
+$(IOTWEB.plot[plot_idx].place_holder).css ("display", "block") ;
+
+if (parms.chart_heading)
+    {
+    $(plot_heading).css ("display", "block")
+    $(plot_heading).text (parms.chart_heading) ;
+    IOTWEB.plot[plot_idx].data.label = "" ;
+    }
+else
+    {
+    IOTWEB.plot[plot_idx].data.label = parms.data_id ;
     }
 
 if (parms.min)
     {
-    plot_options.yaxis.min = parms.min ;
+    IOTWEB.plot[plot_idx].options.yaxis.min = parms.min ;
     }
 if (parms.max)
     {
-    plot_options.yaxis.max = parms.max ;
+    IOTWEB.plot[plot_idx].options.yaxis.max = parms.max ;
     }
 
-$.plot (place_holder, plot_input_data, plot_options) ;
+IOTWEB.plot[plot_idx].plot
+    = $.plot($(IOTWEB.plot[plot_idx].place_holder) ,
+                IOTWEB.plot[plot_idx].data ,
+                IOTWEB.plot[plot_idx].options) ;
+
+select_fun = function (event, ranges)
+            {        
+            var idx = plot_idx ;
+            // clamp the zooming to prevent eternal zoom
+            if (ranges.xaxis.to - ranges.xaxis.from < 0.00001)
+                {
+				ranges.xaxis.to = ranges.xaxis.from + 0.00001;
+			    }
+            if (ranges.yaxis.to - ranges.yaxis.from < 0.00001)
+                {
+                ranges.yaxis.to = ranges.yaxis.from + 0.00001;
+                }
+            $.plot($(IOTWEB.plot[idx].place_holder) ,
+                                IOTWEB.plot[idx].data ,
+                                $.extend (true,
+                                            {},
+                                            IOTWEB.plot[idx].options ,
+                                            {
+                                            xaxis:
+                                                {
+                                                min: ranges.xaxis.from ,
+                                                max: ranges.xaxis.to 
+                                                }
+                                            })
+                            ) ;
+            };
+$(IOTWEB.plot[plot_idx].place_holder)
+    .bind("plotselected",
+            select_fun) ;
+
+// FIX: doesn't redraw x axis ticks
+$(plot_heading).click(function ()
+        {
+        var idx = plot_idx ;
+        IOTWEB.plot[idx].plot.clearSelection();
+        IOTWEB.plot[idx].plot.setupGrid();
+        IOTWEB.plot[idx].plot.draw();
+		});
 
 } // build_history_chart
 
@@ -362,8 +452,6 @@ function log_history_chart
 //console.log (parms.log_id) ;
 //console.log (JSON.stringify (parms.data)) ;
 
-$(".chart_place_holder").css ("display" ,"none")
-
 var entry_id = "virtual_memory" ;
 var chart_parameters =
     {
@@ -374,27 +462,62 @@ var chart_parameters =
     "min" : 0 ,
     "max" : 8000000000
     } ;
+var plot_idx = 0 ;
 
 if (chart_parameters.data.length > 0)
     {
     if (chart_parameters.data[0][entry_id].total)
         {
-        chart_parameters.max = chart_parameters.data[0][entry_id].total ;
+        var new_max = chart_parameters.data[0][entry_id].total ;
+        $.each (
+            [
+            1000000000 ,
+            2000000000 ,
+            4000000000 ,
+            8000000000 ,
+            16000000000 ,
+            32000000000
+            ] ,
+            function (idx, bytes)
+            {
+            if (new_max < bytes)
+                {
+                new_max = bytes ;
+                return false ;
+                }
+            return true ;
+            }) ;
+        //if (new_max < 1000000000)
+            //{
+            //new_max = 1000000000 ;
+            //}
+        //else if (new_max < 2000000000)
+            //{
+            //new_max = 2000000000 ;
+            //}
+        chart_parameters.max = new_max ;
         }
     }
 
+$(".chart_place_holder .chart_heading").css ("display" ,"none")
 switch_display_tab ('chart') ;
 chart_parameters.entry_id = entry_id ;
 
-chart_parameters.data_id = "available" ;
+chart_parameters.plot_idx = 0 ;
 chart_parameters.chart_id = "chart_1" ;
+chart_parameters.chart_heading = "Available Memory" ;
+chart_parameters.data_id = "available" ;
 build_history_chart (chart_parameters) ;
 
+chart_parameters.plot_idx++ ;
 chart_parameters.data_id = "used" ;
+chart_parameters.chart_heading = "Used Memory" ;
 chart_parameters.chart_id = "chart_2" ;
 build_history_chart (chart_parameters) ;
 
+chart_parameters.plot_idx++ ;
 chart_parameters.data_id = "free" ;
+chart_parameters.chart_heading = "Free Memory" ;
 chart_parameters.chart_id = "chart_3" ;
 build_history_chart (chart_parameters) ;
 
@@ -448,14 +571,15 @@ $.post("",
 
 } // log_history
 
-
 //------------------------------------------------------------------------------
 // initialize - Called when page is first loaded
 //------------------------------------------------------------------------------
 function initialize ()
 {
-//alert ('initialize:' + JSON.stringify (IOTWEB.devices))
+//alert ('initialize:') ;
+//alert ('initialize:' + JSON.stringify (IOTWEB.devices)) ;
 var date_stamp = new Date () ;
+var idx ;
 
 $.each (IOTWEB.devices ,
         function (device_id, device_data)
@@ -468,7 +592,18 @@ $.each (IOTWEB.devices ,
 heartbeat_toggle () ;           // Heartbeat ON
 setInterval (heartbeat_check, (IOTWEB.heartbeat_interval * 1000))
 
-} // init //
+for (idx = 0 ; idx < 10 ; idx++)
+    {
+    IOTWEB.plot[idx] =
+        {
+        place_holder : null ,
+        data : {} ,
+        options : {} ,
+        plot : null
+        }
+    }
+
+} // initialize //
 
 $(document).ready (initialize)
 
