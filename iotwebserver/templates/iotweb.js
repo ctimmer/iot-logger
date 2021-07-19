@@ -412,6 +412,7 @@ select_fun = function (event, ranges)
                 {
                 ranges.yaxis.to = ranges.yaxis.from + 0.00001;
                 }
+//IOTWEB.plot[idx].plot =
             $.plot($(IOTWEB.plot[idx].place_holder) ,
                                 IOTWEB.plot[idx].data ,
                                 $.extend (true,
@@ -434,9 +435,10 @@ $(IOTWEB.plot[plot_idx].place_holder)
 $(plot_heading).click(function ()
         {
         var idx = plot_idx ;
-        IOTWEB.plot[idx].plot.clearSelection();
-        IOTWEB.plot[idx].plot.setupGrid();
-        IOTWEB.plot[idx].plot.draw();
+        IOTWEB.plot[idx].plot
+            = $.plot($(IOTWEB.plot[idx].place_holder) ,
+                        IOTWEB.plot[idx].data ,
+                        IOTWEB.plot[idx].options) ;
 		});
 
 } // build_history_chart
