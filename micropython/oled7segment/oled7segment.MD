@@ -103,7 +103,7 @@ oled.show ()
 ```
 ![Image](images/GitHub4.jpg) From code above
 ```
-line 1: Changes the horizontal segment length
+line 1: Changes the segment lengths
 Line 2: Tall, narrow segment, usefull for displaying a lot of digits
 ```
 
