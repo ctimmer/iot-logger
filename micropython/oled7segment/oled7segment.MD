@@ -6,6 +6,9 @@ A lightweight 7 segment character generator that allows cutomizable sizing to fi
 
 ##### Hardware:
 
+All of these tests were run on a HiLetgo ESP32 OLED WiFi Kit ESP-32
+using a Thonny editor on a Raspberry 400.
+
 ##### Set up:
 
 Used with all examples:
@@ -79,18 +82,41 @@ oled.show ()
 ```
 ##### Custom segment sizes
 ```python
+xpos = 0
+ypos = 0
+oled.fill (0)
+seven_segment.set_parameters (digit_size="M", spacing=2)
+char_height = seven_segment.get_character_height () # save tallest seg
+xpos += seven_segment.display_string (xpos, ypos, "10")
+seven_segment.set_parameters (v_segment_length=4, h_segment_length=4)
+seven_segment.display_string (xpos, ypos, "95")
+
+xpos = 0
+ypos += char_height + 2 # plus extra spacing
+seven_segment.set_parameters (bold=True,
+                                spacing=2,
+                                segment_width=2,
+                                v_segment_length=8,
+                                h_segment_length=3)
+seven_segment.display_string (xpos, ypos, "87.6")
+oled.show ()
 ```
 ![Image](images/GitHub4.jpg) From code above
 ```
-line 1:
-Line 2:
+line 1: Changes the horizontal segment length
+Line 2: Tall, narrow segment, usefull for displaying a lot of digits
 ```
 
 ##### Custom segments
 ```python
+xpos = 0
+ypos = 0
+oled.fill (0)
+
+oled.show ()
 ```
 ![Image](images/GitHub5.jpg) From code above
 ```
-line 1:
-Line 2:
+line 1: 
+Line 2: 
 ```
