@@ -50,7 +50,8 @@ seven_segment.display_string (xpos, ypos, "ABCDEF")
 ypos += seven_segment.get_character_height ()
 seven_segment.display_string (xpos, ypos, date_str)
 ypos += seven_segment.get_character_height ()
-seven_segment.display_string (xpos, ypos, time_str)
+seven_segment.display_string (xpos, ypos, time_str)![Image](images/meters.png) One 
 ypos += seven_segment.get_character_height ()
 oled.show ()
 ```
+![Image](images/GitHub2.jpg) One 
