@@ -232,10 +232,10 @@ class OLED7Segment :
         xpos = xpos_in
         if self.bold :
             ypos = ypos_in
-            ylen = self.segment_wid + self.h_segment_len + self.segment_wid
+            ylen = self.segment_wid + self.v_segment_len + self.segment_wid
         else :
             ypos = ypos_in + self.segment_wid
-            ylen = self.h_segment_len
+            ylen = self.v_segment_len
         self.pixel_display.fill_rect (xpos ,
                                         ypos ,
                                         self.segment_wid ,
@@ -245,10 +245,10 @@ class OLED7Segment :
         xpos = xpos_in + self.segment_wid + self.h_segment_len
         if self.bold :
             ypos = ypos_in
-            ylen = self.segment_wid + self.h_segment_len + self.segment_wid
+            ylen = self.segment_wid + self.v_segment_len + self.segment_wid
         else :
             ypos = ypos_in + self.segment_wid
-            ylen = self.h_segment_len
+            ylen = self.v_segment_len
         self.pixel_display.fill_rect (xpos ,
                                         ypos ,
                                         self.segment_wid ,
@@ -262,7 +262,7 @@ class OLED7Segment :
         else :
             xpos = xpos_in + self.segment_wid
             xlen = self.h_segment_len
-        ypos = ypos_in + self.segment_wid + self.h_segment_len
+        ypos = ypos_in + self.segment_wid + self.v_segment_len
         self.pixel_display.fill_rect (xpos ,
                                         ypos ,
                                         xlen ,
@@ -271,11 +271,11 @@ class OLED7Segment :
     def LL_seg (self, xpos_in, ypos_in) :
         xpos = xpos_in
         if self.bold :
-            ypos = ypos_in + self.segment_wid + self.h_segment_len
-            ylen = self.segment_wid + self.h_segment_len + self.segment_wid
+            ypos = ypos_in + self.segment_wid + self.v_segment_len
+            ylen = self.segment_wid + self.v_segment_len + self.segment_wid
         else :
-            ypos = ypos_in + self.segment_wid + self.h_segment_len + self.segment_wid
-            ylen = self.h_segment_len
+            ypos = ypos_in + self.segment_wid + self.v_segment_len + self.segment_wid
+            ylen = self.v_segment_len
         self.pixel_display.fill_rect (xpos ,
                                         ypos ,
                                         self.segment_wid ,
@@ -284,11 +284,11 @@ class OLED7Segment :
     def LR_seg (self, xpos_in, ypos_in) :
         xpos = xpos_in + self.segment_wid + self.h_segment_len
         if self.bold :
-            ypos = ypos_in + self.segment_wid + self.h_segment_len
-            ylen = self.segment_wid + self.h_segment_len + self.segment_wid
+            ypos = ypos_in + self.segment_wid + self.v_segment_len
+            ylen = self.segment_wid + self.v_segment_len + self.segment_wid
         else :
-            ypos = ypos_in + self.segment_wid + self.h_segment_len + self.segment_wid
-            ylen = self.h_segment_len
+            ypos = ypos_in + self.segment_wid + self.v_segment_len + self.segment_wid
+            ylen = self.v_segment_len
         self.pixel_display.fill_rect (xpos ,
                                         ypos ,
                                         self.segment_wid ,
@@ -302,7 +302,11 @@ class OLED7Segment :
         else :
             xpos = xpos_in + self.segment_wid
             xlen = self.h_segment_len
-        ypos = ypos_in + self.segment_wid + self.h_segment_len + self.segment_wid + self.h_segment_len
+        ypos = ypos_in \
+                + self.segment_wid \
+                + self.v_segment_len \
+                + self.segment_wid \
+                + self.v_segment_len
         self.pixel_display.fill_rect (xpos ,
                                         ypos ,
                                         xlen ,
