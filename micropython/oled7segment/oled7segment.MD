@@ -50,8 +50,47 @@ seven_segment.display_string (xpos, ypos, "ABCDEF")
 ypos += seven_segment.get_character_height ()
 seven_segment.display_string (xpos, ypos, date_str)
 ypos += seven_segment.get_character_height ()
-seven_segment.display_string (xpos, ypos, time_str)![Image](images/meters.png) One 
+seven_segment.display_string (xpos, ypos, time_str)
 ypos += seven_segment.get_character_height ()
 oled.show ()
 ```
-![Image](images/GitHub2.jpg) One 
+![Image](images/GitHub2.jpg) From code above
+```
+Line 1: digits only
+Line 2: hexidecimal characters
+Line 3: Date with dash (minus sign)
+Line 4: Time with colon
+```
+##### Large segments
+```python
+xpos = 0
+ypos = 0
+seven_segment.set_parameters (digit_size="L")
+oled.fill (0)
+xpos += seven_segment.display_string (xpos, ypos, "8")
+seven_segment.set_parameters (bold=True)
+seven_segment.display_string (xpos, ypos, "76")
+oled.show ()
+```
+![Image](images/GitHub3.jpg) From code above
+```
+1st character, Bold=False
+2nd, 3rd characters, Bold=True
+```
+##### Custom segment sizes
+```python
+```
+![Image](images/GitHub4.jpg) From code above
+```
+line 1:
+Line 2:
+```
+
+##### Custom segments
+```python
+```
+![Image](images/GitHub5.jpg) From code above
+```
+line 1:
+Line 2:
+```
