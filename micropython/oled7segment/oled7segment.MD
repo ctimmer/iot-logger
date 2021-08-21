@@ -111,12 +111,24 @@ Line 2: Tall, narrow segment, usefull for displaying a lot of digits
 ```python
 xpos = 0
 ypos = 0
+seven_segment.set_parameters (digit_size="L",bold=True)
 oled.fill (0)
-
+seven_segment.TOP_seg (xpos, ypos)
+seven_segment.MID_seg (xpos, ypos)
+seven_segment.BOT_seg (xpos, ypos)
+xpos += 40
+seven_segment.UR_seg (xpos, ypos)
+seven_segment.MID_seg (xpos, ypos)
+seven_segment.LL_seg (xpos, ypos)
+xpos += 40
+seven_segment.UR_seg (xpos, ypos)
+seven_segment.UL_seg (xpos, ypos)
+seven_segment.LR_seg (xpos, ypos)
+seven_segment.LL_seg (xpos, ypos)
 oled.show ()
 ```
-![Image](images/GitHub5.jpg) From code above
+![Image](images/GitHub7.jpg) From code above
 ```
-line 1: 
-Line 2: 
+You can create custom symbols (Klingon?) by calling the individual segment functions.
+Segment positioning is manual.
 ```

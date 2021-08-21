@@ -152,6 +152,7 @@ class OLED7Segment :
                 self.h_segment_len = 22
                 self.segment_wid = 6
                 self.spacing = 2
+        # These settings will override 'digit_size'
         if not v_segment_length == None :  # vertical segment lengths
             self.v_segment_len = v_segment_length
         if not h_segment_length == None :  # horizontal segment lengths
