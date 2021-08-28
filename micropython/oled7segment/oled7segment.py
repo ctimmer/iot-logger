@@ -17,6 +17,7 @@
 #   display_character (xpos, ypos, char) # Called by display_string
 #     Displays char at x position, y position
 #     Only 1 character allowed
+#     Unknown characters are displayed as '?'
 #
 # Typical imports:
 # from machine import Pin, SoftI2C
@@ -86,6 +87,9 @@ class OLED7Segment :
             ":" : {
                 "handler" : self.colon_seg
                 } ,
+            "?" : {
+                "handler" : self.question_seg
+                } ,
             " " : {
                 "handler" : self.space_seg
                 } ,
@@ -123,7 +127,7 @@ class OLED7Segment :
                 "handler" : self.f_seg
                 } ,
             "f" : {
-                "handler" : self.f_seg
+                "handlhttp://localhost:5010/er" : self.f_seg
                 }
             }
     
@@ -189,34 +193,21 @@ class OLED7Segment :
 
     #----------------------------------------------------------------------------------
     # Segment identifiers:
-    # bold=False
-    #  xxTOPxx
-    # x       x
-    # U       U
-    # L       R
-    # x       x
-    #  xxMIDxx
-    # x       x
-    # L       L
-    # L       R
-    # x       x
-    #  xxBOTxx
-    #
-    # bold=True
-    # xxxTOPxxx
-    # x       x
-    # U       U
-    # L       R
-    # x       x
-    # xxxMIDxxx
-    # x       x
-    # L       L
-    # L       R
-    # x       x
-    # xxxBOTxxx
+    # bold=False    bold=True
+    #  xxTOPxx      xxxTOPxxx
+    # x       x     x       x
+    # U       U     U       U
+    # L       R     L       R
+    # x       x     x       x
+    #  xxMIDxx      xxxMIDxxx
+    # x       x     x       x
+    # L       L     L       L
+    # L       R     L       R
+    # x       x     x       x
+    #  xxBOTxx      xxxBOTxxx
     #
     #------------------------------
-    def TOP_seg (self, xpos_in, ypos_in) :
+    def TOP_seg (self, xpos_in, ypos_in, color_in=None) :
         if self.bold :
             xpos = xpos_in
             xlen = self.segment_wid + self.h_segment_len + self.segment_wid
@@ -224,12 +215,16 @@ class OLED7Segment :
             xpos = xpos_in + self.segment_wid
             xlen = self.h_segment_len
         ypos = ypos_in
+        if not color_in == None :
+            seg_color = color_in
+        else :
+            seg_color = self.color
         self.pixel_display.fill_rect (xpos ,
                                         ypos ,
                                         xlen ,
                                         self.segment_wid ,
-                                        self.color)
-    def UL_seg (self, xpos_in, ypos_in) :
+                                        seg_color)
+    def UL_seg (self, xpos_in, ypos_in, color_in=None) :
         xpos = xpos_in
         if self.bold :
             ypos = ypos_in
@@ -237,12 +232,16 @@ class OLED7Segment :
         else :
             ypos = ypos_in + self.segment_wid
             ylen = self.v_segment_len
+        if not color_in == None :
+            seg_color = color_in
+        else :
+            seg_color = self.color
         self.pixel_display.fill_rect (xpos ,
                                         ypos ,
                                         self.segment_wid ,
                                         ylen ,
-                                        self.color)
-    def UR_seg (self, xpos_in, ypos_in) :
+                                        seg_color)
+    def UR_seg (self, xpos_in, ypos_in, color_in=None) :
         xpos = xpos_in + self.segment_wid + self.h_segment_len
         if self.bold :
             ypos = ypos_in
@@ -250,13 +249,17 @@ class OLED7Segment :
         else :
             ypos = ypos_in + self.segment_wid
             ylen = self.v_segment_len
+        if not color_in == None :
+            seg_color = color_in
+        else :
+            seg_color = self.color
         self.pixel_display.fill_rect (xpos ,
                                         ypos ,
                                         self.segment_wid ,
                                         ylen ,
-                                        self.color)
+                                        seg_color)
     #-----------------------------------
-    def MID_seg (self, xpos_in, ypos_in) :
+    def MID_seg (self, xpos_in, ypos_in, color_in=None) :
         if self.bold :
             xpos = xpos_in
             xlen = self.segment_wid + self.h_segment_len + self.segment_wid
@@ -264,12 +267,16 @@ class OLED7Segment :
             xpos = xpos_in + self.segment_wid
             xlen = self.h_segment_len
         ypos = ypos_in + self.segment_wid + self.v_segment_len
+        if not color_in == None :
+            seg_color = color_in
+        else :
+            seg_color = self.color
         self.pixel_display.fill_rect (xpos ,
                                         ypos ,
                                         xlen ,
                                         self.segment_wid ,
-                                        self.color)
-    def LL_seg (self, xpos_in, ypos_in) :
+                                        seg_color)
+    def LL_seg (self, xpos_in, ypos_in, color_in=None) :
         xpos = xpos_in
         if self.bold :
             ypos = ypos_in + self.segment_wid + self.v_segment_len
@@ -277,12 +284,16 @@ class OLED7Segment :
         else :
             ypos = ypos_in + self.segment_wid + self.v_segment_len + self.segment_wid
             ylen = self.v_segment_len
+        if not color_in == None :
+            seg_color = color_in
+        else :
+            seg_color = self.color
         self.pixel_display.fill_rect (xpos ,
                                         ypos ,
                                         self.segment_wid ,
                                         ylen ,
-                                        self.color)
-    def LR_seg (self, xpos_in, ypos_in) :
+                                        seg_color)
+    def LR_seg (self, xpos_in, ypos_in, color_in=None) :
         xpos = xpos_in + self.segment_wid + self.h_segment_len
         if self.bold :
             ypos = ypos_in + self.segment_wid + self.v_segment_len
@@ -290,13 +301,17 @@ class OLED7Segment :
         else :
             ypos = ypos_in + self.segment_wid + self.v_segment_len + self.segment_wid
             ylen = self.v_segment_len
+        if not color_in == None :
+            seg_color = color_in
+        else :
+            seg_color = self.color
         self.pixel_display.fill_rect (xpos ,
                                         ypos ,
                                         self.segment_wid ,
                                         ylen ,
-                                        self.color)
+                                        seg_color)
     #-----------------------------------
-    def BOT_seg (self, xpos_in, ypos_in) :
+    def BOT_seg (self, xpos_in, ypos_in, color_in=None) :
         if self.bold :
             xpos = xpos_in
             xlen = self.segment_wid + self.h_segment_len + self.segment_wid
@@ -308,11 +323,15 @@ class OLED7Segment :
                 + self.v_segment_len \
                 + self.segment_wid \
                 + self.v_segment_len
+        if not color_in == None :
+            seg_color = color_in
+        else :
+            seg_color = self.color
         self.pixel_display.fill_rect (xpos ,
                                         ypos ,
                                         xlen ,
                                         self.segment_wid ,
-                                        self.color)
+                                        seg_color)
     #---------------------------------------------------------------------------------
     def nine_seg (self, xpos, ypos) :
         self.TOP_seg (xpos, ypos)
@@ -473,6 +492,16 @@ class OLED7Segment :
         #self.LR_seg (xpos, ypos)
         #self.BOT_seg (xpos, ypos)
         return self.char_wid
+    #---------------------------------------------------------------------------------
+    def question_seg (self, xpos, ypos) :
+        self.TOP_seg (xpos, ypos)
+        #self.UL_seg (xpos, ypos)
+        self.UR_seg (xpos, ypos)
+        self.MID_seg (xpos,ypos)
+        self.LL_seg (xpos, ypos)
+        #self.LR_seg (xpos, ypos)
+        #self.BOT_seg (xpos, ypos)
+        return self.char_wid
 
     #---------------------------------------------------------------------------------
     def decimal_point_seg (self, xpos, ypos) :
@@ -528,7 +557,7 @@ class OLED7Segment :
         if char in self.segment_chars :
             return self.segment_chars[char]["handler"] (xpos, ypos)
         else :
-            return self.space_seg (xpos, ypos)
+            return self.question_seg (xpos, ypos)
     def display_string (self, xpos, ypos, chars) :
         x_display = xpos
         for char in chars :
