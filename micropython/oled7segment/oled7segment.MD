@@ -132,3 +132,40 @@ oled.show ()
 You can create custom symbols (Klingon?) by calling the individual segment functions.
 Segment positioning is manual.
 ```
+
+##### Busy/Waiting indicator
+```python
+xpos = 0
+ypos = 0
+seven_segment.set_parameters (digit_size="S",bold=False)
+oled.fill (0)
+for i in range (0, 10) :             # repeat 10 times
+    for iteration in range (1, 5) :  # 4 different iterations
+        if iteration == 1 :
+            seven_segment.UL_seg (xpos, ypos, 0)
+            seven_segment.TOP_seg (xpos, ypos)
+            seven_segment.UR_seg (xpos, ypos)
+        elif iteration == 2 :
+            seven_segment.TOP_seg (xpos, ypos, 0)
+            seven_segment.UR_seg (xpos, ypos)
+            seven_segment.MID_seg (xpos, ypos)
+        elif iteration == 3 :
+            seven_segment.UR_seg (xpos, ypos, 0)
+            seven_segment.MID_seg (xpos, ypos)
+            seven_segment.UL_seg (xpos, ypos)
+        elif iteration == 4 :
+            seven_segment.MID_seg (xpos, ypos, 0)
+            seven_segment.UL_seg (xpos, ypos)
+            seven_segment.TOP_seg (xpos, ypos)
+        oled.show ()
+        time.sleep (0.1)
+seven_segment.TOP_seg (xpos, ypos)      # done
+seven_segment.UR_seg (xpos, ypos)
+seven_segment.MID_seg (xpos, ypos)
+seven_segment.UL_seg (xpos, ypos)
+oled.show ()
+```
+Couldn't provide a video. The segments rotate 10 times
+```
+Shows that something is happening
+```
